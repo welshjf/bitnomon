@@ -31,7 +31,10 @@
 import decimal
 import json
 
-from PySide import QtCore, QtNetwork
+#from PySide import QtCore, QtNetwork
+from PyQt4 import QtCore, QtNetwork
+QtCore.Signal = QtCore.pyqtSignal
+QtCore.Slot = QtCore.pyqtSlot
 
 import bitcoinconf
 

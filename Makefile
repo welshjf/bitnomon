@@ -1,9 +1,9 @@
-ifndef PYQT
+ifdef PYQT
+ UIC=pyuic4 -py3
+ RCC=pyrcc4 -py3
+else
  UIC=pyside-uic
  RCC=pyside-rcc
-else
- UIC=pyuic4
- RCC=pyrcc4
 endif
 
 generated=ui_main.py ui_about.py bitnomon_rc.py

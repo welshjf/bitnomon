@@ -1,13 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # Jacob Welsh, March 2014
 
 import sys, signal, time, math
 from collections import deque
 
-from PySide import QtCore, QtGui
-#from PyQt4 import QtCore, QtGui
-#QtCore.Signal = QtCore.pyqtSignal
-#QtCore.Slot = QtCore.pyqtSlot
+#from PySide import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
+QtCore.Signal = QtCore.pyqtSignal
+QtCore.Slot = QtCore.pyqtSlot
 
 import pyqtgraph
 
@@ -16,6 +16,9 @@ from ui_about import Ui_aboutDialog
 import bitcoinconf
 from qbitcoinrpc import *
 from formatting import *
+
+if sys.version_info[0] > 2:
+    unicode = str
 
 class TrafficLog:
 	def __init__(self, history, pollInterval):
@@ -78,7 +81,7 @@ class MainWindow(QtGui.QMainWindow):
 		#self.trafficLog = TrafficLog(10, 2000)
 		minutes = 10
 		poll_interval_ms = 2000
-		trafSamples = minutes * 60000/poll_interval_ms
+		trafSamples = minutes * 60000 // poll_interval_ms
 		self.lastSent = -1
 		self.lastRecv = -1
 		self.trafSent = deque([0]*trafSamples, trafSamples)
@@ -218,7 +221,7 @@ class MainWindow(QtGui.QMainWindow):
 		now = time.time()
 		transactions = pool.values()
 		spots = []
-		minFreePriority = bitcoinconf.COIN * 144 / 250
+		minFreePriority = bitcoinconf.COIN * 144 // 250
 		for tx in transactions:
 			age = (float(tx['time']) - now) / 60.
 			fee = float(tx['fee']) / math.ceil(float(tx['size']/1000.))

@@ -24,7 +24,8 @@ class Poller(QtCore.QObject):
         #self.reply.close() # doesn't help
         #self.reply.deleteLater() # doesn't help
         self.reply.setParent(None)
-        QtCore.QTimer.singleShot(10, self.start)
+        #QtCore.QTimer.singleShot(10, self.start)
+        QtCore.QTimer.singleShot(0, self.start)
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError)
     def error(self, err):

@@ -21,7 +21,7 @@ COIN=100000000
 def read():
 	"""Read a bitcoin.conf file, returning its key/value pairs as a dict.
 
-	To change datadir/conf, set datadir or conf_file in the module namespace.
+	To change datadir/conf, set datadir or conf in the module namespace.
 	"""
 	f = open(os.path.join(datadir, conf), 'r')
 	lines = f.readlines()

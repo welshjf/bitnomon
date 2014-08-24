@@ -107,7 +107,7 @@ class RPCProxy(QtCore.QObject):
 		if conf.get('testnet','0') == '1':
 			self.port = 18332
 		if 'rpcport' in conf:
-			self.port = conf['rpcport']
+			self.port = int(conf['rpcport'])
 		if 'rpcconnect' in conf:
 			self.host = conf['rpcconnect']
 

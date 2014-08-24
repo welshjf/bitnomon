@@ -255,13 +255,13 @@ class MainWindow(QtGui.QMainWindow):
         sys.stderr.write(err_str + '\n')
         self.ui.statusBar.showMessage(err_str)
 
-if __name__ == '__main__':
+def main(argv):
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    app = QtGui.QApplication(sys.argv)
+    app = QtGui.QApplication(argv)
     datadir = None
     conf = None
     testnet = False
-    for arg in sys.argv[1:]:
+    for arg in argv[1:]:
         parts = arg.split('=',1)
         if parts[0] == '-datadir':
             if len(parts) == 2:
@@ -287,3 +287,6 @@ if __name__ == '__main__':
     mainWin = MainWindow(conf)
     mainWin.show()
     app.exec_()
+
+if __name__ == '__main__':
+    main(sys.argv)

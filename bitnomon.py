@@ -284,8 +284,6 @@ class MainWindow(QtGui.QMainWindow):
             self.byteFormatter.format(self.perfProbe.rss))
 
 def main(argv):
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    app = QtGui.QApplication(argv)
     datadir = None
     conf = None
     testnet = False
@@ -314,7 +312,9 @@ def main(argv):
         conf['testnet'] = '1'
     mainWin = MainWindow(conf)
     mainWin.show()
-    app.exec_()
+    return app.exec_()
 
 if __name__ == '__main__':
-    main(sys.argv)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    app = QtGui.QApplication(sys.argv)
+    sys.exit(main(sys.argv))

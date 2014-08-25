@@ -1,8 +1,4 @@
-#!/usr/bin/python3
-# Jacob Welsh, March 2014
-
 import sys
-import signal
 import time
 import math
 from collections import deque
@@ -313,9 +309,4 @@ def main(argv):
         conf['testnet'] = '1'
     mainWin = MainWindow(conf)
     mainWin.show()
-    return app.exec_()
-
-if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    app = QtGui.QApplication(sys.argv)
-    sys.exit(main(sys.argv))
+    return QtGui.qApp.exec_()

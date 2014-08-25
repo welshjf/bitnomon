@@ -111,6 +111,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.proxy = RPCProxy(conf)
         self.busy = False
+        self.missedSamples = 0
+        self.updateStatusMissedSamples()
         self.update()
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update)
@@ -172,7 +174,9 @@ class MainWindow(QtGui.QMainWindow):
     # QNetworkAccessManager parallelizes them)
 
     def update(self):
-        if not self.busy:
+        if self.busy:
+            self.missedSamples += 1
+        else:
             self.infoReply = self.proxy.getinfo()
             self.infoReply.finished.connect(self.updateInfo)
             self.infoReply.error.connect(self.netError)

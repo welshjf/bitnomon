@@ -113,10 +113,11 @@ class MainWindow(QtGui.QMainWindow):
         self.busy = False
         self.missedSamples = 0
         self.updateStatusMissedSamples()
-        self.update()
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(poll_interval_ms)
+        QtCore.QTimer.singleShot(0, self.update)
+
         self.perfProbe = perfprobe.PerfProbe(self)
         self.perfProbe.updated.connect(self.updateStatusRSS)
 

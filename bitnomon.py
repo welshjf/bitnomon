@@ -229,18 +229,17 @@ class MainWindow(QtGui.QMainWindow):
         transactions = pool.values()
         spots = []
         minFreePriority = bitcoinconf.COIN * 144 // 250
+        redPen = pyqtgraph.mkPen((255,0,0,100))
         for tx in transactions:
             age = (float(tx['time']) - now) / 60.
             fee = float(tx['fee']) / math.ceil(float(tx['size']/1000.))
             if int(tx['currentpriority']) >= minFreePriority:
-                pen = (255,0,0,100)
+                pen = redPen
             else:
                 pen = None
             spots.append({'pos': (age, fee), 'pen': pen})
         item = self.ui.memPoolPlot.getPlotItem()
         item.clear()
-        #item.addItem(pyqtgraph.ScatterPlotItem(spots,
-        #   symbol='t', size=10, brush=(255,255,255,50), pen=None, pxMode=True))
         self.memPoolScatterPlot.setData(spots)
         item.addItem(self.memPoolScatterPlot)
         for blockTime in self.blockRecvTimes:

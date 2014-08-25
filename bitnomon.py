@@ -13,6 +13,7 @@ import pyqtgraph
 from ui_main import Ui_MainWindow
 from ui_about import Ui_aboutDialog
 import bitcoinconf
+import perfprobe
 from qbitcoinrpc import *
 from formatting import *
 
@@ -113,6 +114,7 @@ class MainWindow(QtGui.QMainWindow):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update)
         self.timer.start(poll_interval_ms)
+        self.perfProbe = perfprobe.PerfProbe(self)
 
     def _setupMenus(self):
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'));

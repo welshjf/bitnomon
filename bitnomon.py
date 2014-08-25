@@ -72,6 +72,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setupMenus()
+        self._setupStatusBar()
 
         if conf.get('testnet','0') == '1':
             self.setWindowTitle(self.windowTitle() + ' [testnet]')
@@ -115,6 +116,7 @@ class MainWindow(QtGui.QMainWindow):
         self.timer.timeout.connect(self.update)
         self.timer.start(poll_interval_ms)
         self.perfProbe = perfprobe.PerfProbe(self)
+        self.perfProbe.updated.connect(self.updateStatusRSS)
 
     def _setupMenus(self):
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'));
@@ -135,6 +137,14 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
         self.ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
         self.ui.action_NetUnitByteBinary.triggered.connect(self.netUnitByteBinary)
+
+    def _setupStatusBar(self):
+        self.statusRTT = QtGui.QLabel()
+        self.ui.statusBar.addWidget(self.statusRTT, 1)
+        self.statusMissedSamples = QtGui.QLabel()
+        self.ui.statusBar.addWidget(self.statusMissedSamples, 1)
+        self.statusRSS = QtGui.QLabel()
+        self.ui.statusBar.addWidget(self.statusRSS, 1)
 
     def about(self):
         about = QtGui.QDialog(self)
@@ -220,7 +230,7 @@ class MainWindow(QtGui.QMainWindow):
         self.rawMemPoolReply = self.proxy.getrawmempool(True)
         self.rawMemPoolReply.finished.connect(self.updateMemPool)
         self.rawMemPoolReply.error.connect(self.netError)
-    
+
     @QtCore.Slot(object)
     def updateMemPool(self, pool):
         now = time.time()
@@ -244,19 +254,29 @@ class MainWindow(QtGui.QMainWindow):
             item.addLine(x=(blockTime - now)/60.)
 
         # end of chain; show stats
-        self.ui.statusBar.showMessage(u'JSON-RPC RTTs: %d %d %d %d' % (
+        self.statusRTT.setText(u'RTT: %d %d %d %d' % (
             self.infoReply.rtt,
             self.miningInfoReply.rtt,
             self.netTotalsReply.rtt,
             self.rawMemPoolReply.rtt))
 
         self.busy = False
-    
+
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError)
     def netError(self, err):
         err_str = u'Network error: ' + unicode(err)
         sys.stderr.write(err_str + '\n')
         self.ui.statusBar.showMessage(err_str)
+
+    @QtCore.Slot()
+    def updateStatusMissedSamples(self):
+        self.statusMissedSamples.setText(u'Missed samples: %d' %
+            self.missedSamples)
+
+    @QtCore.Slot()
+    def updateStatusRSS(self):
+        self.statusRSS.setText(u'RSS: %s' %
+            self.byteFormatter.format(self.perfProbe.rss))
 
 def main(argv):
     signal.signal(signal.SIGINT, signal.SIG_DFL)

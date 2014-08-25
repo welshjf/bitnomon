@@ -31,10 +31,13 @@ class HttpHandler(SocketServer.BaseRequestHandler):
         except KeyboardInterrupt:
             logging.debug('KeyboardInterrupt, closing connection')
         except HttpError,e:
-            logging.warn('HttpError(%s), closing connection' % str(e))
+            logging.warn('Protocol error (%s), closing connection' % str(e))
 
-        self.request.shutdown(socket.SHUT_RDWR)
-        self.request.close()
+        try:
+            self.request.shutdown(socket.SHUT_RDWR)
+            self.request.close()
+        except:
+            pass
 
     def begin(self):
         self.state_func = self.read_method
@@ -92,7 +95,8 @@ class HttpHandler(SocketServer.BaseRequestHandler):
                     self.headers['Content-Length'][:self.max_header_len])
             content = self.rfile.read(content_length)
             if len(content) < content_length:
-                raise HttpError('Read less content than expected')
+                logging.debug('Got less content than expected in POST; assuming EOF')
+                raise EOFError
             self.handle_post(content)
         self.state_func = self.send_response
 
@@ -106,10 +110,18 @@ class HttpHandler(SocketServer.BaseRequestHandler):
             'Content-Length: %d' % len(self.response),
             '',
             self.response))
-        self.wfile.write(msg)
+        try:
+            self.wfile.write(msg)
+        except:
+            raise EOFError
         self.begin()
 
 class JsonRpcHandler(HttpHandler):
+
+    def __init__(self, *args, **kwargs):
+        with open('mempool.txt') as f:
+            self.raw_mem_pool = json.loads(f.read())
+        HttpHandler.__init__(self, *args, **kwargs)
 
     def handle_post(self, data):
         result = {}
@@ -117,24 +129,22 @@ class JsonRpcHandler(HttpHandler):
         id = data['id']
         method = data['method']
         if method == 'getinfo':
-            result['blocks'] = 317247
-            result['connections'] = 0
-        elif method == 'getmininginfo':
-            result['difficulty'] = 23844670038.80329895
-            result['pooledtx'] = 2512
-        elif method == 'getnettotals':
-            result['totalbytesrecv'] = 2473056304
-            result['totalbytessent'] = 13355852932
-        elif method == 'getrawmempool':
-            result['003156476fcc8d8a620ef2efa227865088b38697d55e1a6c1b5d1b2e3637fa3b'] = {
-                "size" : 191,
-                "fee" : 0.00000000,
-                "time" : 1407220106,
-                "height" : 314036,
-                "startingpriority" : 5498181.81818182,
-                "currentpriority" : 5666454.06949072,
-                "depends" : []
+            result = {
+                'blocks': 317247,
+                'connections': 0,
             }
+        elif method == 'getmininginfo':
+            result = {
+                'difficulty': 23844670038.80329895,
+                'pooledtx': 2512,
+            }
+        elif method == 'getnettotals':
+            result = {
+                'totalbytesrecv': 2473056304,
+                'totalbytessent': 13355852932,
+            }
+        elif method == 'getrawmempool':
+            result = self.raw_mem_pool
         else:
             logging.warn('Unknown method: %s' % method)
         self.response = json.dumps({'result': result, 'error': None, 'id': id})

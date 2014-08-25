@@ -112,6 +112,7 @@ class MainWindow(QtGui.QMainWindow):
         item.addItem(self.memPoolScatterPlot)
 
         self.proxy = RPCProxy(conf)
+        self.busy = False
         self.update()
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update)
@@ -159,12 +160,15 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.showNormal()
 
+    # Chain requests sequentially (doesn't seem to work reliably if
+    # QNetworkAccessManager parallelizes them)
+
     def update(self):
-        # chain requests sequentially (doesn't seem to work reliably if
-        # QNetworkAccessManager parallelizes them)
-        self.infoReply = self.proxy.getinfo()
-        self.infoReply.finished.connect(self.updateInfo)
-        self.infoReply.error.connect(self.netError)
+        if not self.busy:
+            self.infoReply = self.proxy.getinfo()
+            self.infoReply.finished.connect(self.updateInfo)
+            self.infoReply.error.connect(self.netError)
+            self.busy = True
 
     @QtCore.Slot(object)
     def updateInfo(self, info):
@@ -248,6 +252,8 @@ class MainWindow(QtGui.QMainWindow):
             self.miningInfoReply.rtt,
             self.netTotalsReply.rtt,
             self.rawMemPoolReply.rtt))
+
+        self.busy = False
     
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError)
     def netError(self, err):

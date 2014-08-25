@@ -1,0 +1,11 @@
+#!/usr/bin/python3
+
+import sys
+import signal
+
+from qtwrapper import QtGui
+import main
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+app = QtGui.QApplication(sys.argv)
+sys.exit(main.main(sys.argv))

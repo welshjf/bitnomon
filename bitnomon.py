@@ -83,7 +83,7 @@ class MainWindow(QtGui.QMainWindow):
 
         #self.trafficLog = TrafficLog(10, 2000)
         minutes = 10
-        poll_interval_ms = 2000
+        poll_interval_ms = 1000
         trafSamples = minutes * 60000 // poll_interval_ms
         self.lastSent = -1
         self.lastRecv = -1

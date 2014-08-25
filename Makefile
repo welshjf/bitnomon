@@ -1,5 +1,5 @@
 ifdef PYQT
- UIC=pyuic4 -py3
+ UIC=pyuic4
  RCC=pyrcc4 -py3
 else
  UIC=pyside-uic

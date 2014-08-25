@@ -177,6 +177,7 @@ class MainWindow(QtGui.QMainWindow):
     def update(self):
         if self.busy:
             self.missedSamples += 1
+            self.updateStatusMissedSamples()
         else:
             self.infoReply = self.proxy.getinfo()
             self.infoReply.finished.connect(self.updateInfo)

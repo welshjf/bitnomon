@@ -7,11 +7,7 @@ import time
 import math
 from collections import deque
 
-#from PySide import QtCore, QtGui
-from PyQt4 import QtCore, QtGui
-QtCore.Signal = QtCore.pyqtSignal
-QtCore.Slot = QtCore.pyqtSlot
-
+from qtwrapper import QtCore, QtGui
 import pyqtgraph
 
 from ui_main import Ui_MainWindow

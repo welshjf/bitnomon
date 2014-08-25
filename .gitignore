@@ -1,3 +1,4 @@
 *.pyc
 ui_*.py
 *_rc.py
+qtwrapper.py

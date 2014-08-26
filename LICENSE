@@ -26,12 +26,13 @@ SOFTWARE.
 PyQt Note
 =========
 
-Bitnomon can use either PySide or PyQt as its Qt binding, though it is
-developed and tested with PySide. PySide, like Qt itself, is available under
-the LGPL. PyQt is only available under the GPL or a commercial license from
-Riverbank Computing Limited. The developer(s) of Bitnomon impose no
-restrictions on it beyond the MIT license above; any additional restrictions
-resulting from the use of PyQt are between you and Riverbank.
+Bitnomon can use either PySide or PyQt as its Qt binding. PyQt is recommended,
+because there is a memory leak at least as of PySide 1.2.1.
+
+PySide, like Qt itself, is available under the LGPL. PyQt is only available
+under the GPL or a commercial license from Riverbank Computing Limited. If you
+use or distribute Bitnomon with PyQt, you may be subject to the additional
+restrictions of the GPL.
 
 Other
 =====

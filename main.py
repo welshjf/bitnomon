@@ -3,14 +3,14 @@ import time
 import math
 from collections import deque
 
-from qtwrapper import QtCore, QtGui
+from qtwrapper import QtCore, QtGui, QtNetwork
 import pyqtgraph
 
 from ui_main import Ui_MainWindow
 from ui_about import Ui_aboutDialog
 import bitcoinconf
 import perfprobe
-from qbitcoinrpc import *
+import qbitcoinrpc
 from formatting import *
 
 if sys.version_info[0] > 2:
@@ -107,7 +107,7 @@ class MainWindow(QtGui.QMainWindow):
             symbol='t', size=10, brush=(255,255,255,50), pen=None, pxMode=True)
         item.addItem(self.memPoolScatterPlot)
 
-        self.proxy = RPCProxy(conf)
+        self.proxy = qbitcoinrpc.RPCProxy(conf)
         self.busy = False
         self.missedSamples = 0
         self.updateStatusMissedSamples()

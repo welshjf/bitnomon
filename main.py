@@ -16,6 +16,8 @@ from formatting import *
 if sys.version_info[0] > 2:
     unicode = str
 
+debug = False
+
 class TrafficLog:
     def __init__(self, history, pollInterval):
         """Arguments:
@@ -267,7 +269,8 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError)
     def netError(self, err):
         err_str = u'Network error: ' + unicode(err)
-        sys.stderr.write(err_str + '\n')
+        if debug:
+            sys.stderr.write(err_str + '\n')
         self.ui.statusBar.showMessage(err_str)
 
     @QtCore.Slot()
@@ -298,6 +301,9 @@ def main(argv):
                 sys.stderr.write('Warning: empty -conf, needs "="\n')
         elif arg == '-testnet':
             testnet = True
+        elif arg == '-d' or arg == '-debug':
+            global debug
+            debug = True
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
     conf = bitcoinconf.Conf()

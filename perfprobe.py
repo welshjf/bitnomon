@@ -1,6 +1,7 @@
 import os
 import sys
 from qtwrapper import QtCore
+import main
 
 class PerfProbe(QtCore.QObject):
 
@@ -12,18 +13,20 @@ class PerfProbe(QtCore.QObject):
     updated = QtCore.Signal()
 
     def __init__(self, parent=None):
+
         super(PerfProbe, self).__init__(parent)
-        sys.stdout.write('"User time (sec)","RSS (KiB)"\n')
 
         self.probeTimer = QtCore.QTimer(self)
         self.probeTimer.timeout.connect(self.run)
         self.probeTimer.start(1000)
         QtCore.QTimer.singleShot(0, self.run)
 
-        self.logTimer = QtCore.QTimer(self)
-        self.logTimer.timeout.connect(self.logCSV)
-        self.logTimer.start(1000*60)
-        QtCore.QTimer.singleShot(0, self.logCSV)
+        if main.debug:
+            self.logTimer = QtCore.QTimer(self)
+            self.logTimer.timeout.connect(self.logCSV)
+            self.logTimer.start(1000*60)
+            QtCore.QTimer.singleShot(0, self.logCSV)
+            sys.stdout.write('"User time (sec)","RSS (KiB)"\n')
 
     @QtCore.Slot()
     def run(self):

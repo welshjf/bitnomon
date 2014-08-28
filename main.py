@@ -272,6 +272,7 @@ class MainWindow(QtGui.QMainWindow):
         if debug:
             sys.stderr.write(err_str + '\n')
         self.ui.statusBar.showMessage(err_str)
+        self.busy = False
 
     @QtCore.Slot()
     def updateStatusMissedSamples(self):

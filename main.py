@@ -282,7 +282,7 @@ class MainWindow(QtGui.QMainWindow):
 
 def main(argv):
     datadir = None
-    conf = None
+    conffile = 'bitcoin.conf'
     testnet = False
     for arg in argv[1:]:
         parts = arg.split('=',1)
@@ -293,18 +293,15 @@ def main(argv):
                 sys.stderr.write('Warning: empty -datadir, needs "="\n')
         elif parts[0] == '-conf':
             if len(parts) == 2:
-                conf = parts[1]
+                conffile = parts[1]
             else:
                 sys.stderr.write('Warning: empty -conf, needs "="\n')
         elif arg == '-testnet':
             testnet = True
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
-    if datadir is not None:
-        bitcoinconf.datadir = datadir
-    if conf is not None:
-        bitcoinconf.conf = conf
-    conf = bitcoinconf.read()
+    conf = bitcoinconf.Conf()
+    conf.load(datadir, conffile)
     if testnet:
         conf['testnet'] = '1'
     mainWin = MainWindow(conf)

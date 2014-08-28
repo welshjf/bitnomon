@@ -1,4 +1,7 @@
 #!/usr/bin/python3
 
 import unittest
-unittest.main('test_formatting', exit=False)
+unittest.main(module=None, argv=['run-unit-tests',
+    'test_formatting',
+    'test_bitcoinconf',
+    ])

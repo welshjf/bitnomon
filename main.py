@@ -286,6 +286,11 @@ class MainWindow(QtGui.QMainWindow):
             self.byteFormatter.format(self.perfProbe.rss))
 
 def main(argv):
+
+    # pyqtgraph's exit crash workaround seems to do more harm than good.
+    pyqtgraph.setConfigOption('exitCleanup', False)
+
+    # Parse arguments
     datadir = None
     conffile = 'bitcoin.conf'
     testnet = False
@@ -308,10 +313,21 @@ def main(argv):
             debug = True
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
+
+    # Load configuration
     conf = bitcoinconf.Conf()
     conf.load(datadir, conffile)
     if testnet:
+        # CLI overrides config file
         conf['testnet'] = '1'
-    mainWin = MainWindow(conf)
-    mainWin.show()
-    return QtGui.qApp.exec_()
+
+    try:
+        mainWin = MainWindow(conf)
+        mainWin.show()
+        return QtGui.qApp.exec_()
+    except:
+        # PyQt4 segfaults if there's an uncaught exception after
+        # Ui_MainWindow.setupUi.
+        import traceback
+        traceback.print_exc()
+        return 1

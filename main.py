@@ -110,14 +110,14 @@ class MainWindow(QtGui.QMainWindow):
         self.proxy = qbitcoinrpc.RPCProxy(conf)
         self.busy = False
         self.missedSamples = 0
-        self.updateStatusMissedSamples()
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(poll_interval_ms)
         QtCore.QTimer.singleShot(0, self.update)
 
-        self.perfProbe = perfprobe.PerfProbe(self)
-        self.perfProbe.updated.connect(self.updateStatusRSS)
+        if debug:
+            self.perfProbe = perfprobe.PerfProbe(self)
+            self.perfProbe.updated.connect(self.updateStatusRSS)
 
     def _setupMenus(self):
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'));
@@ -140,12 +140,13 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.action_NetUnitByteBinary.triggered.connect(self.netUnitByteBinary)
 
     def _setupStatusBar(self):
-        self.statusRTT = QtGui.QLabel()
-        self.ui.statusBar.addWidget(self.statusRTT, 1)
+        self.statusNetwork = QtGui.QLabel()
+        self.ui.statusBar.addWidget(self.statusNetwork, 1)
         self.statusMissedSamples = QtGui.QLabel()
-        self.ui.statusBar.addWidget(self.statusMissedSamples, 1)
-        self.statusRSS = QtGui.QLabel()
-        self.ui.statusBar.addWidget(self.statusRSS, 1)
+        self.ui.statusBar.addWidget(self.statusMissedSamples, 0)
+        if debug:
+            self.statusRSS = QtGui.QLabel()
+            self.ui.statusBar.addWidget(self.statusRSS, 0)
 
     def about(self):
         about = QtGui.QDialog(self)
@@ -258,7 +259,7 @@ class MainWindow(QtGui.QMainWindow):
             item.addLine(x=(blockTime - now)/60.)
 
         # end of chain; show stats
-        self.statusRTT.setText(u'RTT: %d %d %d %d' % (
+        self.statusNetwork.setText(u'RTT: %d %d %d %d' % (
             self.infoReply.rtt,
             self.miningInfoReply.rtt,
             self.netTotalsReply.rtt,
@@ -271,7 +272,7 @@ class MainWindow(QtGui.QMainWindow):
         err_str = u'Network error: ' + unicode(err)
         if debug:
             sys.stderr.write(err_str + '\n')
-        self.ui.statusBar.showMessage(err_str)
+        self.statusNetwork.setText(err_str)
         self.busy = False
 
     @QtCore.Slot()

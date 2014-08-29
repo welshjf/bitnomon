@@ -62,7 +62,7 @@ class RPCReply(QtCore.QObject):
     """
 
     finished = QtCore.Signal(object)
-    error = QtCore.Signal(QtNetwork.QNetworkReply.NetworkError)
+    error = QtCore.Signal(QtNetwork.QNetworkReply.NetworkError, str)
 
     def __init__(self, networkReply):
         super(RPCReply, self).__init__()
@@ -74,7 +74,7 @@ class RPCReply(QtCore.QObject):
 
     def _error(self, err):
         self.networkReply.finished.disconnect()
-        self.error.emit(err)
+        self.error.emit(err, self.networkReply.errorString())
 
     def _read_reply(self):
         self.rtt = QtCore.QDateTime.currentMSecsSinceEpoch() - self._starttime

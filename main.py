@@ -267,9 +267,9 @@ class MainWindow(QtGui.QMainWindow):
 
         self.busy = False
 
-    @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError)
-    def netError(self, err):
-        err_str = u'Network error: ' + unicode(err)
+    @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
+    def netError(self, err, err_str):
+        err_str = 'Network error: {}'.format(err_str)
         if debug:
             sys.stderr.write(err_str + '\n')
         self.statusNetwork.setText(err_str)

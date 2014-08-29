@@ -13,9 +13,6 @@ import perfprobe
 import qbitcoinrpc
 from formatting import *
 
-if sys.version_info[0] > 2:
-    unicode = str
-
 debug = False
 
 class TrafficLog:
@@ -185,9 +182,9 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.Slot(object)
     def updateInfo(self, info):
-        self.ui.lConns.setText(unicode(info['connections']))
+        self.ui.lConns.setText(str(info['connections']))
         blocks = info['blocks']
-        self.ui.lBlocks.setText(unicode(blocks))
+        self.ui.lBlocks.setText(str(blocks))
         if self.lastBlockCount != -1:
             if blocks > self.lastBlockCount:
                 self.lastBlockCount = blocks
@@ -203,7 +200,7 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot(object)
     def updateMiningInfo(self, info):
         self.ui.lDifficulty.setText(u'%.3g' % info['difficulty'])
-        self.ui.lPooledTx.setText(unicode(info['pooledtx']))
+        self.ui.lPooledTx.setText(str(info['pooledtx']))
 
         # chain next request
         self.netTotalsReply = self.proxy.getnettotals()
@@ -259,7 +256,7 @@ class MainWindow(QtGui.QMainWindow):
             item.addLine(x=(blockTime - now)/60.)
 
         # end of chain; show stats
-        self.statusNetwork.setText(u'RTT: %d %d %d %d' % (
+        self.statusNetwork.setText('RTT: %d %d %d %d' % (
             self.infoReply.rtt,
             self.miningInfoReply.rtt,
             self.netTotalsReply.rtt,
@@ -277,12 +274,12 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.Slot()
     def updateStatusMissedSamples(self):
-        self.statusMissedSamples.setText(u'Missed samples: %d' %
+        self.statusMissedSamples.setText('Missed samples: %d' %
             self.missedSamples)
 
     @QtCore.Slot()
     def updateStatusRSS(self):
-        self.statusRSS.setText(u'RSS: %s' %
+        self.statusRSS.setText('RSS: %s' %
             self.byteFormatter.format(self.perfProbe.rss))
 
 def main(argv):

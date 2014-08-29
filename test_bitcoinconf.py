@@ -1,9 +1,17 @@
 import unittest
 import sys
+import os
+
 if sys.version_info < (3,3):
     import mock
 else:
     from unittest import mock
+
+if sys.version_info < (3,):
+    from StringIO import StringIO
+else:
+    from io import StringIO
+
 import bitcoinconf
 
 class TestGlobals(unittest.TestCase):
@@ -24,3 +32,29 @@ class TestGlobals(unittest.TestCase):
         test_for_system('Windows', {'APPDATA': 'test_appdata'})
         test_for_system('Darwin', {'HOME': 'test_home'})
         test_for_system('Linux', {'HOME': 'test_home'})
+
+class TestConf(unittest.TestCase):
+
+    @mock.patch('bitcoinconf.open', create=True)
+    def test_load(self, m):
+        m.return_value = StringIO('\n'.join((
+            '# comment',
+            '\t # whitespace comment',
+            '',
+            'a=1 # trailing comment',
+            'b = 2',
+            '  c  =  3  ',
+            'd = ',
+            '=',
+            '')))
+        conf = bitcoinconf.Conf()
+        conf.load('test_datadir')
+        m.assert_called_once_with(os.path.join('test_datadir', 'bitcoin.conf'),
+                'r')
+        self.assertEqual(conf, {
+            'a': '1',
+            'b': '2',
+            'c': '3',
+            'd': '',
+            '': '',
+            })

@@ -14,7 +14,9 @@ else:
 
 import bitcoinconf
 
-class TestGlobals(unittest.TestCase):
+class ModuleTest(unittest.TestCase):
+
+    "Tests for top-level module components (non-class functions)"
 
     @mock.patch('bitcoinconf.platform.system')
     def test_default_datadir(self, mock_system):
@@ -33,7 +35,7 @@ class TestGlobals(unittest.TestCase):
         test_for_system('Darwin', {'HOME': 'test_home'})
         test_for_system('Linux', {'HOME': 'test_home'})
 
-class TestConf(unittest.TestCase):
+class ConfTest(unittest.TestCase):
 
     @mock.patch('bitcoinconf.open', create=True)
     def test_load(self, m):

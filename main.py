@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import math
 from collections import deque
@@ -13,7 +14,13 @@ import perfprobe
 import qbitcoinrpc
 from formatting import *
 
+if sys.version_info[0] > 2:
+    unicode = str
+
+# Bitnomon global settings (these don't go in bitcoinconf because they're not
+# part of Bitcoin Core)
 debug = False
+data_dir = None
 
 class TrafficLog:
     def __init__(self, history, pollInterval):
@@ -311,13 +318,24 @@ def main(argv):
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
 
-    # Load configuration
+    # Load Bitcoin configuration
     conf = bitcoinconf.Conf()
     conf.load(datadir, conffile)
     if testnet:
         # CLI overrides config file
         conf['testnet'] = '1'
 
+    # Load Bitnomon configuration
+    QtGui.qApp.setOrganizationName('eemta.org')
+    QtGui.qApp.setOrganizationDomain('eemta.org')
+    QtGui.qApp.setApplicationName('Bitnomon')
+    global data_dir
+    data_dir = unicode(QtGui.QDesktopServices.storageLocation(
+        QtGui.QDesktopServices.DataLocation))
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    # Enter event loop
     try:
         mainWin = MainWindow(conf)
         mainWin.show()

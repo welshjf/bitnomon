@@ -5,6 +5,7 @@ import math
 from collections import deque
 
 from qtwrapper import QtCore, QtGui, QtNetwork
+import numpy
 import pyqtgraph
 
 from ui_main import Ui_MainWindow
@@ -16,6 +17,7 @@ from formatting import *
 
 if sys.version_info[0] > 2:
     unicode = str
+    xrange = range
 
 # Bitnomon global settings (these don't go in bitcoinconf because they're not
 # part of Bitcoin Core)
@@ -107,6 +109,8 @@ class MainWindow(QtGui.QMainWindow):
         item.showGrid(x=True, y=True)
         item.setLabel('left', text='Fee', units='BTC/kB')
         item.setLabel('bottom', text='Age (minutes)')
+        # Use the scatter plot API directly, because going through PlotDataItem
+        # has strange complications.
         self.memPoolScatterPlot = pyqtgraph.ScatterPlotItem([],
             symbol='t', size=10, brush=(255,255,255,50), pen=None, pxMode=True)
         item.addItem(self.memPoolScatterPlot)
@@ -252,21 +256,26 @@ class MainWindow(QtGui.QMainWindow):
 
         now = time.time()
         transactions = pool.values()
-        spots = []
         minFreePriority = bitcoinconf.COIN * 144 // 250
         redPen = pyqtgraph.mkPen((255,0,0,100))
+        pens = [None]*len(transactions)
+        positions = numpy.empty((len(transactions), 2))
+        idx_iter = iter(xrange(len(transactions)))
         for tx in transactions:
             age = (float(tx['time']) - now) / 60.
-            fee = float(tx['fee']) / math.ceil(float(tx['size']/1000.))
+            fee = float(tx['fee']) / math.ceil(float(tx['size'])/1000.)
+            i = next(idx_iter)
+            positions[i] = (age,fee)
             if int(tx['currentpriority']) >= minFreePriority:
-                pen = redPen
-            else:
-                pen = None
-            spots.append({'pos': (age, fee), 'pen': pen})
+                pens[i] = redPen
+
         item = self.ui.memPoolPlot.getPlotItem()
+        # Clear previous block lines
         item.clear()
-        self.memPoolScatterPlot.setData(spots)
+        self.memPoolScatterPlot.setData(pos=positions, pen=pens)
+        # Re-add the scatter plot after clearing
         item.addItem(self.memPoolScatterPlot)
+        # Draw block lines
         for blockTime in self.blockRecvTimes:
             item.addLine(x=(blockTime - now)/60.)
 

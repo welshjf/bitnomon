@@ -189,6 +189,11 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.Slot(object)
     def updateInfo(self, info):
+        # chain next request
+        self.miningInfoReply = self.proxy.getmininginfo()
+        self.miningInfoReply.finished.connect(self.updateMiningInfo)
+        self.miningInfoReply.error.connect(self.netError)
+
         self.ui.lConns.setText(str(info['connections']))
         blocks = info['blocks']
         self.ui.lBlocks.setText(str(blocks))
@@ -199,23 +204,23 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.lastBlockCount = blocks
 
-        # chain next request
-        self.miningInfoReply = self.proxy.getmininginfo()
-        self.miningInfoReply.finished.connect(self.updateMiningInfo)
-        self.miningInfoReply.error.connect(self.netError)
-
     @QtCore.Slot(object)
     def updateMiningInfo(self, info):
-        self.ui.lDifficulty.setText(u'%.3g' % info['difficulty'])
-        self.ui.lPooledTx.setText(str(info['pooledtx']))
-
         # chain next request
         self.netTotalsReply = self.proxy.getnettotals()
         self.netTotalsReply.finished.connect(self.updateNetTotals)
         self.netTotalsReply.error.connect(self.netError)
 
+        self.ui.lDifficulty.setText(u'%.3g' % info['difficulty'])
+        self.ui.lPooledTx.setText(str(info['pooledtx']))
+
     @QtCore.Slot(object)
     def updateNetTotals(self, totals):
+        # chain next request
+        self.rawMemPoolReply = self.proxy.getrawmempool(True)
+        self.rawMemPoolReply.finished.connect(self.updateMemPool)
+        self.rawMemPoolReply.error.connect(self.netError)
+
         recv = totals['totalbytesrecv']
         self.ui.lRecvTotal.setText(self.byteFormatter.format(recv))
         if self.lastRecv != -1:
@@ -235,13 +240,16 @@ class MainWindow(QtGui.QMainWindow):
         self.trafSentPlot.setData(self.trafSent)
         self.trafRecvPlot.setData(self.trafRecv)
 
-        # chain next request
-        self.rawMemPoolReply = self.proxy.getrawmempool(True)
-        self.rawMemPoolReply.finished.connect(self.updateMemPool)
-        self.rawMemPoolReply.error.connect(self.netError)
-
     @QtCore.Slot(object)
     def updateMemPool(self, pool):
+        # end of chain: unlock for next sample and show stats
+        self.busy = False
+        self.statusNetwork.setText('RTT: %d %d %d %d' % (
+            self.infoReply.rtt,
+            self.miningInfoReply.rtt,
+            self.netTotalsReply.rtt,
+            self.rawMemPoolReply.rtt))
+
         now = time.time()
         transactions = pool.values()
         spots = []
@@ -261,15 +269,6 @@ class MainWindow(QtGui.QMainWindow):
         item.addItem(self.memPoolScatterPlot)
         for blockTime in self.blockRecvTimes:
             item.addLine(x=(blockTime - now)/60.)
-
-        # end of chain; show stats
-        self.statusNetwork.setText('RTT: %d %d %d %d' % (
-            self.infoReply.rtt,
-            self.miningInfoReply.rtt,
-            self.netTotalsReply.rtt,
-            self.rawMemPoolReply.rtt))
-
-        self.busy = False
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, err, err_str):

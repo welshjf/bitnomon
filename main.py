@@ -13,6 +13,7 @@ from ui_about import Ui_aboutDialog
 import bitcoinconf
 import perfprobe
 import qbitcoinrpc
+import rrdplot
 from formatting import *
 
 if sys.version_info[0] > 2:
@@ -100,10 +101,12 @@ class MainWindow(QtGui.QMainWindow):
         item.showGrid(y=True)
         item.setLabel('left', text='Traffic', units='B/s')
         item.hideAxis('bottom')
-        self.trafSentPlot = item.plot(self.trafSent,
+        self.trafSentPlot = rrdplot.RRDPlotItem([],
                 pen=(255,0,0), fillLevel=0, brush=(255,0,0,100))
-        self.trafRecvPlot = item.plot(self.trafRecv,
+        item.addItem(self.trafSentPlot)
+        self.trafRecvPlot = rrdplot.RRDPlotItem([],
                 pen=(0,255,0), fillLevel=0, brush=(0,255,0,100))
+        item.addItem(self.trafRecvPlot)
 
         item = self.ui.memPoolPlot.getPlotItem()
         item.showGrid(x=True, y=True)

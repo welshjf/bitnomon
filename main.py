@@ -2,7 +2,6 @@ import sys
 import os
 import time
 import math
-from collections import deque
 
 from qtwrapper import QtCore, QtGui, QtNetwork
 import numpy
@@ -29,52 +28,6 @@ debug = False
 # QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
 # TODO: support other platforms
 data_dir = os.path.expanduser('~/.local/share/Bitnomon')
-
-class TrafficLog:
-    def __init__(self, history, pollInterval):
-        """Arguments:
-        history - length of time to store samples, in minutes
-        pollInterval - time between samples, in milliseconds
-        """
-        self.pollInterval = pollInterval/1000.
-        self.samplesPerSecond = 1./self.pollInterval
-        self.totalSamples = int(history * 60 * self.samplesPerSecond)
-        self.totalSent = deque([0]*self.totalSamples, self.totalSamples)
-        self.totalRecv = deque([0]*self.totalSamples, self.totalSamples)
-        self.oldestValidSample = 0
-
-    def append(self, totalSent, totalRecv):
-        if totalSent < self.totalSent[-1] or totalRecv < self.totalRecv[-1]:
-            # discontinuity: totals not monotonically increasing
-            self.oldestValidSample = 0
-        elif self.oldestValidSample < self.totalSamples:
-            self.oldestValidSample += 1
-        self.totalSent.append(totalSent)
-        self.totalRecv.append(totalSent)
-
-    def _sampleTotal(self, age, totals):
-        # FIXME interpolate
-        ageInSamples = int(age*self.samplesPerSecond)
-        if ageInSamples > self.oldestValidSample:
-            ageInSamples = self.oldestValidSample
-        elif ageInSamples < 0:
-            ageInSamples = 0
-        return ageInSamples/self.samplesPerSecond, totals[ageInSamples]
-
-    def sampleTotalSent(self, age):
-        self._sampleTotal(age, self.totalSent)
-    def sampleTotalRecv(self, age):
-        self._sampleTotal(age, self.totalRecv)
-
-    def _sampleInterval(self, start, end, totals):
-        startAge, startTotal = self._sampleTotal(start, totals)
-        endAge, endTotal = self._sampleTotal(end, totals)
-        return startAge - endAge, endTotal - startTotal
-
-    def sampleIntervalSent(self, start, end):
-        self._sampleInterval(start, end, self.totalSent)
-    def sampleIntervalRecv(self, start, end):
-        self._sampleInterval(start, end, self.totalRecv)
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, conf={}, parent=None):

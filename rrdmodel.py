@@ -1,10 +1,17 @@
 import sys
 import os
+import time
+import decimal
 import rrdtool
 
 import main
 
 class RRDModel(object):
+
+    "Round-robin database model."
+
+    # Needs refactoring into a generic RRDModel base class and a specific
+    # implementation for traffic data.
 
     def __init__(self):
         self.rrd_file = os.path.join(main.data_dir, 'traffic.rrd')
@@ -12,40 +19,158 @@ class RRDModel(object):
             self.create()
 
     def create(self):
-        rrdtool.create(self.rrd_file,
-                '--step', '1',
-                'DS:inbound:COUNTER:2:0:U',
-                'RRA:AVERAGE:0.5:1:1000',
-                'RRA:AVERAGE:0.5:2:1000',
-                'RRA:AVERAGE:0.5:4:1000',
-                'RRA:AVERAGE:0.5:8:1000',
-                'RRA:AVERAGE:0.5:16:1000',
-                'RRA:AVERAGE:0.5:32:1000',
-                'RRA:AVERAGE:0.5:64:1000',
-                'RRA:AVERAGE:0.5:128:1000',
-                'RRA:AVERAGE:0.5:256:1000',
-                'RRA:AVERAGE:0.5:512:1000',
-                'RRA:AVERAGE:0.5:1024:1000',
-                'RRA:AVERAGE:0.5:2048:1000',
-                'RRA:AVERAGE:0.5:4096:1000',
-                'RRA:AVERAGE:0.5:8192:1000',
-                'RRA:AVERAGE:0.5:16384:1000',
-                'RRA:AVERAGE:0.5:32768:1000',
-                'DS:outbound:COUNTER:2:0:U',
-                'RRA:AVERAGE:0.5:1:1000',
-                'RRA:AVERAGE:0.5:2:1000',
-                'RRA:AVERAGE:0.5:4:1000',
-                'RRA:AVERAGE:0.5:8:1000',
-                'RRA:AVERAGE:0.5:16:1000',
-                'RRA:AVERAGE:0.5:32:1000',
-                'RRA:AVERAGE:0.5:64:1000',
-                'RRA:AVERAGE:0.5:128:1000',
-                'RRA:AVERAGE:0.5:256:1000',
-                'RRA:AVERAGE:0.5:512:1000',
-                'RRA:AVERAGE:0.5:1024:1000',
-                'RRA:AVERAGE:0.5:2048:1000',
-                'RRA:AVERAGE:0.5:4096:1000',
-                'RRA:AVERAGE:0.5:8192:1000',
-                'RRA:AVERAGE:0.5:16384:1000',
-                'RRA:AVERAGE:0.5:32768:1000',
-                )
+        "Create a new RRD file."
+        data_source_type = 'COUNTER'
+        step = '60'
+        heartbeat = '60'
+        min_val = '0'
+        max_val = 'U'
+        consolidation = (
+            'RRA:AVERAGE:0.5:1:60',     # every minute for an hour
+            'RRA:AVERAGE:0.5:10:144',   # every 10 mins for a day
+            'RRA:AVERAGE:0.5:60:168',   # every hour for a week
+            'RRA:AVERAGE:0.5:1440:365', # every day for a year
+        )
+        args = [self.rrd_file, '--step', '60']
+        args.append(':'.join(('DS', 'inbound', data_source_type, heartbeat,
+                min_val, max_val)))
+        args.extend(consolidation)
+        args.append(':'.join(('DS', 'outbound', data_source_type, heartbeat,
+                min_val, max_val)))
+        args.extend(consolidation)
+        rrdtool.create(*args)
+
+    def update(self, t, vals):
+        """Add a record to the RRD.
+
+        t -- timestamp in milliseconds, or None for current time
+        vals -- iterable of sample values"""
+        if t is None:
+            time_str = 'N'
+        else:
+            time_str = str(decimal.Decimal(t) / 1000)
+        rrdtool.update(self.rrd_file,
+                ':'.join((time_str,) + tuple(map(str, vals))))
+
+    def fetch(self, start, end=None, resolution=1):
+        """Fetch data from the RRD.
+
+        start -- integer start time in seconds since the epoch, or negative for
+                 relative to end
+        end -- integer end time in seconds since the epoch, or None for current
+               time"""
+        if end is None:
+            end = int(time.time())
+        if start < 0:
+            start += end
+        end -= end % resolution
+        start -= start % resolution
+        args = [self.rrd_file, 'AVERAGE', '-s', str(start)]
+        time_span, header, values = rrdtool.fetch(self.rrd_file, 'AVERAGE',
+                '-s', str(start),
+                '-e', str(end),
+                '-r', str(resolution))
+        ts_start, ts_end, ts_res = time_span
+        times = range(ts_start+ts_res, ts_end+ts_res, ts_res)
+        def defined(row):
+            t, vals = row
+            for val in vals:
+                if val is None:
+                    return False
+            return True
+        return filter(defined, zip(times, values))
+
+class RRA(object):
+
+    """Simple in-memory round-robin archive.
+
+    RRA(int) -> RRA of the given size, initialized to None.
+    RRA(iterable) -> RRA matching the size and contents of iterable."""
+
+    def __init__(self, arg):
+        if isinstance(arg, int):
+            if arg < 2:
+                # Need one item for update() and two for differences()
+                raise ValueError("RRA must have at least two items")
+            self.data = [None]*arg
+            self.oldest = 0
+        else:
+            self.data = []
+            for item in arg:
+                self.data.append(item)
+            self.oldest = 0
+
+    def __getitem__(self, i):
+        if i >= len(self.data) or i < -len(self.data):
+            raise IndexError
+        return self.data[(self.oldest + i) % len(self.data)]
+
+    def __iter__(self):
+        "Return a generator for items, oldest to newest."
+        i = self.oldest
+        for i in xrange(self.oldest, len(self.data)):
+            yield self.data[i]
+        for i in xrange(0, self.oldest):
+            yield self.data[i]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __repr__(self):
+        return 'RRA({})'.format(list(self))
+
+    def __str__(self):
+        return str(list(self))
+
+    def update(self, v):
+        "Insert a new item, overwriting the oldest."
+        self.data[self.oldest] = v
+        self.oldest += 1
+        if self.oldest == len(self.data):
+            self.oldest = 0
+
+    def difference(self, i1, i2):
+        "Return self[i1] - self[i2], or None if undefined."
+        v1 = self[i1]
+        if v1 is None:
+            return None
+        v2 = self[i2]
+        if v2 is None:
+            return None
+        return v1 - v2
+
+    def differences(self, undef_val=None):
+        """Return an iterable of the differences between subsequent items.
+
+        undef_val -- value to return instead of None for undefined intervals"""
+        return RRADiffSequence(self, undef_val)
+
+class RRADiffSequence(object):
+
+    """Iterable for RRA item differences.
+
+    This can't be implemented as a generator within RRA because random access
+    is assumed by pyqtgraph.PlotDataItem.setData."""
+
+    def __init__(self, rra, undef_val):
+        self.rra = rra
+        self.rra_len = len(rra)
+        self.undef_val = undef_val
+        self.i = 1
+
+    def __getitem__(self, i):
+        if i < 0:
+            i += self.rra_len - 1
+        if i < 0:
+            raise IndexError
+        val = self.rra.difference(i+1, i)
+        return val if val is not None else self.undef_val
+
+    def __iter__(self):
+        "Return a generator for differences, oldest to newest."
+        for i in xrange(1, self.rra_len):
+            val = self.rra.difference(i, i-1)
+            yield val if val is not None else self.undef_val
+
+    def __len__(self):
+        return self.rra_len - 1

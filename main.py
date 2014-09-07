@@ -22,8 +22,12 @@ if sys.version_info[0] > 2:
 
 # Bitnomon global settings (these don't go in bitcoinconf because they're not
 # part of Bitcoin Core)
+# TODO: move these out of global scope.
 debug = False
-data_dir = None
+# QDesktopServices.DataLocation doesn't give the desired result.
+# QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
+# TODO: support other platforms
+data_dir = os.path.expanduser('~/.local/share/Bitnomon')
 
 class TrafficLog:
     def __init__(self, history, pollInterval):
@@ -340,9 +344,7 @@ def main(argv):
     QtGui.qApp.setOrganizationName('eemta.org')
     QtGui.qApp.setOrganizationDomain('eemta.org')
     QtGui.qApp.setApplicationName('Bitnomon')
-    global data_dir
-    data_dir = unicode(QtGui.QDesktopServices.storageLocation(
-        QtGui.QDesktopServices.DataLocation))
+    # QSettings stuff goes here
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 

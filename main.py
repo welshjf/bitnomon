@@ -13,6 +13,7 @@ from ui_about import Ui_aboutDialog
 import bitcoinconf
 import perfprobe
 import qbitcoinrpc
+import rrdmodel
 import rrdplot
 from formatting import *
 
@@ -88,16 +89,18 @@ class MainWindow(QtGui.QMainWindow):
 
         self.byteFormatter = ByteCountFormatter()
 
-        #self.trafficLog = TrafficLog(10, 2000)
-        minutes = 10
-        poll_interval_ms = 1000
-        trafSamples = minutes * 60000 // poll_interval_ms
-        self.lastSent = -1
-        self.lastRecv = -1
-        self.trafSent = deque([0]*trafSamples, trafSamples)
-        self.trafRecv = deque([0]*trafSamples, trafSamples)
-        self.lastBlockCount = -1
-        self.blockRecvTimes = deque([], 24)
+        # Keep 10 minutes of one-second resolution traffic counter data.
+        # (Actually one poll interval, which is assumed to be one second)
+        self.trafSent = rrdmodel.RRA(600)
+        self.trafRecv = rrdmodel.RRA(600)
+
+        # Keep a long-term database of traffic data using RRDtool.
+        self.trafRRD = rrdmodel.RRDModel()
+
+        # Keep the last ~4 hours of block arrival times, as seen by Bitnomon,
+        # since the bitcoin API doesn't provide this.
+        self.lastBlockCount = None
+        self.blockRecvTimes = rrdmodel.RRA(24)
 
         item = self.ui.networkPlot.getPlotItem()
         item.setMouseEnabled(x=False)
@@ -127,7 +130,7 @@ class MainWindow(QtGui.QMainWindow):
         self.missedSamples = 0
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
-        self.timer.start(poll_interval_ms)
+        self.timer.start(1000)
         QtCore.QTimer.singleShot(0, self.update)
 
         if debug:
@@ -208,12 +211,12 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.lConns.setText(str(info['connections']))
         blocks = info['blocks']
         self.ui.lBlocks.setText(str(blocks))
-        if self.lastBlockCount != -1:
+        if self.lastBlockCount is None:
+            self.lastBlockCount = blocks
+        else:
             if blocks > self.lastBlockCount:
                 self.lastBlockCount = blocks
-                self.blockRecvTimes.append(time.time())
-        else:
-            self.lastBlockCount = blocks
+                self.blockRecvTimes.update(time.time())
 
     @QtCore.Slot(object)
     def updateMiningInfo(self, info):
@@ -232,24 +235,39 @@ class MainWindow(QtGui.QMainWindow):
         self.rawMemPoolReply.finished.connect(self.updateMemPool)
         self.rawMemPoolReply.error.connect(self.netError)
 
+        def format_speed(byte_count, seconds):
+            if byte_count is None:
+                return '-'
+            else:
+                return self.byteFormatter.format(
+                        byte_count/float(seconds)) + '/s'
+
+        # Update in-memory RRAs for high-resolution traffic data and averages
         recv = totals['totalbytesrecv']
         self.ui.lRecvTotal.setText(self.byteFormatter.format(recv))
-        if self.lastRecv != -1:
-            recv1s = recv - self.lastRecv
-            self.ui.lRecv1s.setText(self.byteFormatter.format(recv1s))
-            self.trafRecv.append(recv1s)
-        self.lastRecv = recv
+        self.trafRecv.update(recv)
+        self.ui.lRecv1s.setText(
+                format_speed(self.trafRecv.difference(-1, -2), 1))
+        self.ui.lRecv10s.setText(
+                format_speed(self.trafRecv.difference(-1, -11), 10))
+        self.ui.lRecv1m.setText(
+                format_speed(self.trafRecv.difference(-1, -61), 60))
 
         sent = totals['totalbytessent']
         self.ui.lSentTotal.setText(self.byteFormatter.format(sent))
-        if self.lastSent != -1:
-            sent1s = sent - self.lastSent
-            self.ui.lSent1s.setText(self.byteFormatter.format(sent1s))
-            self.trafSent.append(sent1s)
-        self.lastSent = sent
+        self.trafSent.update(sent)
+        self.ui.lSent1s.setText(
+                format_speed(self.trafSent.difference(-1, -2), 1))
+        self.ui.lSent10s.setText(
+                format_speed(self.trafSent.difference(-1, -11), 10))
+        self.ui.lSent1m.setText(
+                format_speed(self.trafSent.difference(-1, -61), 60))
 
-        self.trafSentPlot.setData(self.trafSent)
-        self.trafRecvPlot.setData(self.trafRecv)
+        # Update RRDtool database for long-term traffic data
+        self.trafRRD.update(totals['timemillis'], (recv, sent))
+
+        self.trafSentPlot.setData(self.trafSent.differences(0))
+        self.trafRecvPlot.setData(self.trafRecv.differences(0))
 
     @QtCore.Slot(object)
     def updateMemPool(self, pool):
@@ -284,7 +302,8 @@ class MainWindow(QtGui.QMainWindow):
         item.addItem(self.memPoolScatterPlot)
         # Draw block lines
         for blockTime in self.blockRecvTimes:
-            item.addLine(x=(blockTime - now)/60.)
+            if blockTime is not None:
+                item.addLine(x=(blockTime - now)/60.)
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, err, err_str):

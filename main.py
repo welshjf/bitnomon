@@ -55,28 +55,33 @@ class MainWindow(QtGui.QMainWindow):
         self.lastBlockCount = None
         self.blockRecvTimes = rrdmodel.RRA(24)
 
-        item = self.ui.networkPlot.getPlotItem()
-        item.setMouseEnabled(x=False)
-        #item.setMenuEnabled(False)
-        item.showGrid(y=True)
-        item.setLabel('left', text='Traffic', units='B/s')
-        item.hideAxis('bottom')
+        self.networkPlot = pyqtgraph.PlotItem(
+                name='traffic',
+                left=(self.tr('Traffic'), 'B/s')
+                )
+        self.networkPlot.showGrid(y=True)
+        self.networkPlot.hideAxis('bottom')
         self.trafSentPlot = rrdplot.RRDPlotItem([],
                 pen=(255,0,0), fillLevel=0, brush=(255,0,0,100))
-        item.addItem(self.trafSentPlot)
         self.trafRecvPlot = rrdplot.RRDPlotItem([],
                 pen=(0,255,0), fillLevel=0, brush=(0,255,0,100))
-        item.addItem(self.trafRecvPlot)
+        self.networkPlot.addItem(self.trafSentPlot)
+        self.networkPlot.addItem(self.trafRecvPlot)
+        self.ui.networkPlotView.setCentralWidget(self.networkPlot)
 
-        item = self.ui.memPoolPlot.getPlotItem()
-        item.showGrid(x=True, y=True)
-        item.setLabel('left', text='Fee', units='BTC/kB')
-        item.setLabel('bottom', text='Age (minutes)')
+        self.memPoolPlot = pyqtgraph.PlotItem(
+                name='mempool',
+                left=(self.tr('Fee'), 'BTC/kB'),
+                bottom=(self.tr('Age (minutes)'),),
+                )
+        self.memPoolPlot.setXLink('traffic')
+        self.memPoolPlot.showGrid(x=True, y=True)
         # Use the scatter plot API directly, because going through PlotDataItem
         # has strange complications.
         self.memPoolScatterPlot = pyqtgraph.ScatterPlotItem([],
             symbol='t', size=10, brush=(255,255,255,50), pen=None, pxMode=True)
-        item.addItem(self.memPoolScatterPlot)
+        self.memPoolPlot.addItem(self.memPoolScatterPlot)
+        self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
         self.proxy = qbitcoinrpc.RPCProxy(conf)
         self.busy = False
@@ -247,16 +252,15 @@ class MainWindow(QtGui.QMainWindow):
             if int(tx['currentpriority']) >= minFreePriority:
                 pens[i] = redPen
 
-        item = self.ui.memPoolPlot.getPlotItem()
         # Clear previous block lines
-        item.clear()
+        self.memPoolPlot.clear()
         self.memPoolScatterPlot.setData(pos=positions, pen=pens)
         # Re-add the scatter plot after clearing
-        item.addItem(self.memPoolScatterPlot)
+        self.memPoolPlot.addItem(self.memPoolScatterPlot)
         # Draw block lines
         for blockTime in self.blockRecvTimes:
             if blockTime is not None:
-                item.addLine(x=(blockTime - now)/60.)
+                self.memPoolPlot.addLine(x=(blockTime - now)/60.)
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, err, err_str):

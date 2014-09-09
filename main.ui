@@ -136,9 +136,6 @@
       </layout>
      </widget>
     </item>
-    <item row="3" column="0" colspan="3">
-     <widget class="PlotWidget" name="networkPlot"/>
-    </item>
     <item row="0" column="1">
      <widget class="QGroupBox" name="group_traffic">
       <property name="title">
@@ -328,14 +325,17 @@
      </widget>
     </item>
     <item row="2" column="0" colspan="3">
-     <widget class="PlotWidget" name="memPoolPlot"/>
+     <widget class="GraphicsView" name="memPoolPlotView"/>
+    </item>
+    <item row="3" column="0" colspan="3">
+     <widget class="GraphicsView" name="networkPlotView"/>
     </item>
    </layout>
    <zorder>group_basic</zorder>
-   <zorder>networkPlot</zorder>
    <zorder>horizontalSpacer</zorder>
    <zorder>group_traffic</zorder>
-   <zorder>memPoolPlot</zorder>
+   <zorder>memPoolPlotView</zorder>
+   <zorder>networkPlotView</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -432,7 +432,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>GraphicsView</class>
    <extends>QGraphicsView</extends>
    <header>pyqtgraph</header>
   </customwidget>

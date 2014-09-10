@@ -44,8 +44,13 @@ class MainWindow(QtGui.QMainWindow):
 
         # Keep 10 minutes of one-second resolution traffic counter data.
         # (Actually one poll interval, which is assumed to be one second)
-        self.trafSent = rrdmodel.RRA(600)
-        self.trafRecv = rrdmodel.RRA(600)
+        traf_samples = 600
+        traf_intervals = traf_samples - 1
+        self.trafSent = rrdmodel.RRA(traf_samples)
+        self.trafRecv = rrdmodel.RRA(traf_samples)
+        # Plot speeds using descending age in minutes, to match mempool
+        self.trafPlotDomain = numpy.array(
+                tuple(seconds/60. for seconds in xrange(-traf_intervals+1,1)))
 
         # Keep a long-term database of traffic data using RRDtool.
         self.trafRRD = rrdmodel.RRDModel()
@@ -61,9 +66,9 @@ class MainWindow(QtGui.QMainWindow):
                 )
         self.networkPlot.showGrid(y=True)
         self.networkPlot.hideAxis('bottom')
-        self.trafSentPlot = rrdplot.RRDPlotItem([],
+        self.trafSentPlot = rrdplot.RRDPlotItem(numpy.zeros(traf_intervals),
                 pen=(255,0,0), fillLevel=0, brush=(255,0,0,100))
-        self.trafRecvPlot = rrdplot.RRDPlotItem([],
+        self.trafRecvPlot = rrdplot.RRDPlotItem(numpy.zeros(traf_intervals),
                 pen=(0,255,0), fillLevel=0, brush=(0,255,0,100))
         self.networkPlot.addItem(self.trafSentPlot)
         self.networkPlot.addItem(self.trafRecvPlot)
@@ -224,8 +229,12 @@ class MainWindow(QtGui.QMainWindow):
         # Update RRDtool database for long-term traffic data
         self.trafRRD.update(totals['timemillis'], (recv, sent))
 
-        self.trafSentPlot.setData(self.trafSent.differences(0))
-        self.trafRecvPlot.setData(self.trafRecv.differences(0))
+        self.trafSentPlot.setData(
+                self.trafPlotDomain,
+                self.trafSent.differences(0))
+        self.trafRecvPlot.setData(
+                self.trafPlotDomain,
+                self.trafRecv.differences(0))
 
     @QtCore.Slot(object)
     def updateMemPool(self, pool):

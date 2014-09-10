@@ -36,12 +36,55 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self._setupMenus()
         self._setupStatusBar()
+        self._setupPlots()
 
         if conf.get('testnet','0') == '1':
             self.setWindowTitle(self.windowTitle() + ' [testnet]')
 
         self.byteFormatter = ByteCountFormatter()
 
+        self.proxy = qbitcoinrpc.RPCProxy(conf)
+        self.busy = False
+        self.missedSamples = 0
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(1000)
+        QtCore.QTimer.singleShot(0, self.update)
+
+        if debug:
+            self.perfProbe = perfprobe.PerfProbe(self)
+            self.perfProbe.updated.connect(self.updateStatusRSS)
+
+    def _setupMenus(self):
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'));
+        self.ui.action_Quit.setIcon(icon);
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'));
+        self.ui.action_FullScreen.setIcon(icon);
+        self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'));
+        self.ui.action_About.setIcon(icon);
+        self.ui.action_About.triggered.connect(self.about)
+
+        self.ui.action_NetUnits.setSeparator(True)
+        self.ui.netUnitGroup = QtGui.QActionGroup(self)
+        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitBitSI)
+        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitByteSI)
+        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitByteBinary)
+        self.ui.action_NetUnitByteSI.setChecked(True)
+        self.ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
+        self.ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
+        self.ui.action_NetUnitByteBinary.triggered.connect(self.netUnitByteBinary)
+
+    def _setupStatusBar(self):
+        self.statusNetwork = QtGui.QLabel()
+        self.ui.statusBar.addWidget(self.statusNetwork, 1)
+        self.statusMissedSamples = QtGui.QLabel()
+        self.ui.statusBar.addWidget(self.statusMissedSamples, 0)
+        if debug:
+            self.statusRSS = QtGui.QLabel()
+            self.ui.statusBar.addWidget(self.statusRSS, 0)
+
+    def _setupPlots(self):
         # Keep 10 minutes of one-second resolution traffic counter data.
         # (Actually one poll interval, which is assumed to be one second)
         traf_samples = 600
@@ -87,47 +130,6 @@ class MainWindow(QtGui.QMainWindow):
             symbol='t', size=10, brush=(255,255,255,50), pen=None, pxMode=True)
         self.memPoolPlot.addItem(self.memPoolScatterPlot)
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
-
-        self.proxy = qbitcoinrpc.RPCProxy(conf)
-        self.busy = False
-        self.missedSamples = 0
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.update)
-        self.timer.start(1000)
-        QtCore.QTimer.singleShot(0, self.update)
-
-        if debug:
-            self.perfProbe = perfprobe.PerfProbe(self)
-            self.perfProbe.updated.connect(self.updateStatusRSS)
-
-    def _setupMenus(self):
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'));
-        self.ui.action_Quit.setIcon(icon);
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'));
-        self.ui.action_FullScreen.setIcon(icon);
-        self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'));
-        self.ui.action_About.setIcon(icon);
-        self.ui.action_About.triggered.connect(self.about)
-
-        self.ui.action_NetUnits.setSeparator(True)
-        self.ui.netUnitGroup = QtGui.QActionGroup(self)
-        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitBitSI)
-        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitByteSI)
-        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitByteBinary)
-        self.ui.action_NetUnitByteSI.setChecked(True)
-        self.ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
-        self.ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
-        self.ui.action_NetUnitByteBinary.triggered.connect(self.netUnitByteBinary)
-
-    def _setupStatusBar(self):
-        self.statusNetwork = QtGui.QLabel()
-        self.ui.statusBar.addWidget(self.statusNetwork, 1)
-        self.statusMissedSamples = QtGui.QLabel()
-        self.ui.statusBar.addWidget(self.statusMissedSamples, 0)
-        if debug:
-            self.statusRSS = QtGui.QLabel()
-            self.ui.statusBar.addWidget(self.statusRSS, 0)
 
     def about(self):
         about = QtGui.QDialog(self)

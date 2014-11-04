@@ -13,14 +13,17 @@ class RRDModel(object):
     # Needs refactoring into a generic RRDModel base class and a specific
     # implementation for traffic data.
 
-    def __init__(self):
-        self.rrd_file = os.path.join(main.data_dir, 'traffic.rrd')
+    def __init__(self, data_dir):
+        self.rrd_file = os.path.join(data_dir, 'traffic.rrd')
         if not os.path.exists(self.rrd_file):
             self.create()
 
     def create(self):
         "Create a new RRD file."
         data_source_type = 'COUNTER'
+        # the black magic that is rrd_parsetime.c doesn't accept a second count
+        # before 1980
+        start = bytes(60*60*24*365*10+1)
         step = '60'
         heartbeat = '60'
         min_val = '0'
@@ -31,7 +34,7 @@ class RRDModel(object):
             'RRA:AVERAGE:0.5:60:168',   # every hour for a week
             'RRA:AVERAGE:0.5:1440:365', # every day for a year
         )
-        args = [self.rrd_file, '--step', '60']
+        args = [self.rrd_file, '--start', start, '--step', step]
         args.append(':'.join(('DS', 'inbound', data_source_type, heartbeat,
                 min_val, max_val)))
         args.extend(consolidation)
@@ -67,8 +70,8 @@ class RRDModel(object):
         start -= start % resolution
         args = [self.rrd_file, 'AVERAGE', '-s', str(start)]
         time_span, header, values = rrdtool.fetch(self.rrd_file, 'AVERAGE',
-                '-s', str(start),
-                '-e', str(end),
+                '-s', str(int(start)),
+                '-e', str(int(end)),
                 '-r', str(resolution))
         ts_start, ts_end, ts_res = time_span
         times = range(ts_start+ts_res, ts_end+ts_res, ts_res)

@@ -96,7 +96,7 @@ class MainWindow(QtGui.QMainWindow):
                 tuple(seconds/60. for seconds in xrange(-traf_intervals+1,1)))
 
         # Keep a long-term database of traffic data using RRDtool.
-        self.trafRRD = rrdmodel.RRDModel()
+        self.trafRRD = rrdmodel.RRDModel(data_dir)
 
         # Keep the last ~4 hours of block arrival times, as seen by Bitnomon,
         # since the bitcoin API doesn't provide this.

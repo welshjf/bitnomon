@@ -10,12 +10,11 @@ import rrdmodel
 
 class RRDModelTest(unittest.TestCase):
 
-    @mock.patch('rrdmodel.main.data_dir', new='test_data_dir')
     @mock.patch('rrdmodel.os.path.exists')
     @mock.patch('rrdmodel.RRDModel.create')
     def setUp(self, mock_create, mock_path_exists):
         mock_path_exists.return_value = False
-        self.model = rrdmodel.RRDModel()
+        self.model = rrdmodel.RRDModel('test_data_dir')
         self.mock_create = mock_create
 
     def test_init(self):

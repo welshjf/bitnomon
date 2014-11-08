@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import math
+import traceback
 
 from qtwrapper import QtCore, QtGui, QtNetwork
 import numpy
@@ -28,6 +29,12 @@ debug = False
 # QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
 # TODO: support other platforms
 data_dir = os.path.expanduser('~/.local/share/Bitnomon')
+
+# Registry of sequential API requests and slots.
+# Each element is a triple of the API method (str), method arguments (tuple),
+# and response handler slot (function).
+# Populated by the chainRequest decorator in MainWindow.
+commandChain = []
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, conf={}, parent=None):
@@ -153,26 +160,54 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.showNormal()
 
-    # Chain requests sequentially (doesn't seem to work reliably if
-    # QNetworkAccessManager parallelizes them)
-
     def update(self):
         if self.busy:
             self.missedSamples += 1
             self.updateStatusMissedSamples()
         else:
-            self.infoReply = self.proxy.getinfo()
-            self.infoReply.finished.connect(self.updateInfo)
-            self.infoReply.error.connect(self.netError)
-            self.busy = True
+            self.startChain()
 
-    @QtCore.Slot(object)
+    # Chain requests sequentially (doesn't seem to work reliably if
+    # QNetworkAccessManager parallelizes them)
+
+    def chainRequest(method, *args):
+        def decorator(responseHandler):
+            def handlerWrapper(self, data):
+                try:
+                    responseHandler(self, data)
+                except:
+                    traceback.print_exc()
+                self.nextChainedRequest()
+            commandChain.append((method, args, handlerWrapper))
+            return handlerWrapper
+        return decorator
+
+    def startChain(self):
+        self.chainIndex = 0
+        self.replies = []
+        # Lock the chain to avoid sending more requests if the previous ones
+        # haven't finished
+        self.busy = True
+        self.nextChainedRequest()
+
+    def nextChainedRequest(self):
+        if self.chainIndex >= len(commandChain):
+            # End of chain: unlock for next sample and show stats
+            self.busy = False
+            self.statusNetwork.setText('RTT: ' + ' '.join(
+                [str(reply.rtt) for reply in self.replies]))
+        else:
+            method, args, slot = commandChain[self.chainIndex]
+            boundSlot = slot.__get__(self, type(self))
+            reply = self.proxy._call(method, *args)
+            reply.finished.connect(boundSlot)
+            reply.error.connect(self.netError)
+            # Reply object must be kept alive until slot is finished
+            self.replies.append(reply)
+            self.chainIndex += 1
+
+    @chainRequest('getinfo')
     def updateInfo(self, info):
-        # chain next request
-        self.miningInfoReply = self.proxy.getmininginfo()
-        self.miningInfoReply.finished.connect(self.updateMiningInfo)
-        self.miningInfoReply.error.connect(self.netError)
-
         self.ui.lConns.setText(str(info['connections']))
         blocks = info['blocks']
         self.ui.lBlocks.setText(str(blocks))
@@ -183,23 +218,13 @@ class MainWindow(QtGui.QMainWindow):
                 self.lastBlockCount = blocks
                 self.blockRecvTimes.update(time.time())
 
-    @QtCore.Slot(object)
+    @chainRequest('getmininginfo')
     def updateMiningInfo(self, info):
-        # chain next request
-        self.netTotalsReply = self.proxy.getnettotals()
-        self.netTotalsReply.finished.connect(self.updateNetTotals)
-        self.netTotalsReply.error.connect(self.netError)
-
         self.ui.lDifficulty.setText(u'%.3g' % info['difficulty'])
         self.ui.lPooledTx.setText(str(info['pooledtx']))
 
-    @QtCore.Slot(object)
+    @chainRequest('getnettotals')
     def updateNetTotals(self, totals):
-        # chain next request
-        self.rawMemPoolReply = self.proxy.getrawmempool(True)
-        self.rawMemPoolReply.finished.connect(self.updateMemPool)
-        self.rawMemPoolReply.error.connect(self.netError)
-
         def format_speed(byte_count, seconds):
             if byte_count is None:
                 return '-'
@@ -238,16 +263,8 @@ class MainWindow(QtGui.QMainWindow):
                 self.trafPlotDomain,
                 self.trafRecv.differences(0))
 
-    @QtCore.Slot(object)
+    @chainRequest('getrawmempool', True)
     def updateMemPool(self, pool):
-        # end of chain: unlock for next sample and show stats
-        self.busy = False
-        self.statusNetwork.setText('RTT: %d %d %d %d' % (
-            self.infoReply.rtt,
-            self.miningInfoReply.rtt,
-            self.netTotalsReply.rtt,
-            self.rawMemPoolReply.rtt))
-
         now = time.time()
         transactions = pool.values()
         minFreePriority = bitcoinconf.COIN * 144 // 250
@@ -343,6 +360,5 @@ def main(argv):
     except:
         # PyQt4 segfaults if there's an uncaught exception after
         # Ui_MainWindow.setupUi.
-        import traceback
         traceback.print_exc()
         return 1

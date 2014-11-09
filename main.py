@@ -42,6 +42,8 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.label_logo.hide()
+        self.isFullScreen = False
         self._setupMenus()
         self._setupStatusBar()
         self._setupPlots()
@@ -158,12 +160,21 @@ class MainWindow(QtGui.QMainWindow):
         self.byteFormatter.setUnitBytes()
         self.byteFormatter.setPrefixBinary()
 
+    @QtCore.Slot(QtGui.QResizeEvent)
+    def resizeEvent(self, event):
+        fullScreen = bool(self.windowState() & QtCore.Qt.WindowFullScreen)
+        if fullScreen != self.isFullScreen:
+            self.ui.action_FullScreen.setChecked(fullScreen)
+
     @QtCore.Slot(bool)
     def toggleFullScreen(self, enable):
+        self.isFullScreen = enable
         if enable:
             self.showFullScreen()
+            self.ui.label_logo.show()
         else:
             self.showNormal()
+            self.ui.label_logo.hide()
 
     def update(self):
         if self.busy:

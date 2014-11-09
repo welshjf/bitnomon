@@ -19,7 +19,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_3">
-    <item row="0" column="2">
+    <item row="0" column="6">
      <spacer name="horizontalSpacer">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -32,10 +32,10 @@
       </property>
      </spacer>
     </item>
-    <item row="0" column="0" rowspan="2">
+    <item row="0" column="3">
      <widget class="QGroupBox" name="group_basic">
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="0">
+       <item row="1" column="1">
         <widget class="QLabel" name="label_9">
          <property name="font">
           <font>
@@ -51,14 +51,14 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
+       <item row="1" column="2">
         <widget class="QLabel" name="lBlocks">
          <property name="text">
           <string>-</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
+       <item row="0" column="1">
         <widget class="QLabel" name="label_7">
          <property name="font">
           <font>
@@ -74,7 +74,7 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="2" column="1">
         <widget class="QLabel" name="label_8">
          <property name="font">
           <font>
@@ -90,14 +90,14 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="2" column="2">
         <widget class="QLabel" name="lPooledTx">
          <property name="text">
           <string>-</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
+       <item row="0" column="2">
         <widget class="QLabel" name="lConns">
          <property name="minimumSize">
           <size>
@@ -110,7 +110,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="3" column="1">
         <widget class="QLabel" name="label_10">
          <property name="font">
           <font>
@@ -126,7 +126,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="3" column="2">
         <widget class="QLabel" name="lDifficulty">
          <property name="text">
           <string>-</string>
@@ -136,7 +136,7 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="1">
+    <item row="0" column="5">
      <widget class="QGroupBox" name="group_traffic">
       <property name="title">
        <string>Network Traffic</string>
@@ -324,11 +324,18 @@
       </layout>
      </widget>
     </item>
-    <item row="2" column="0" colspan="3">
+    <item row="1" column="1" colspan="6">
      <widget class="GraphicsView" name="memPoolPlotView"/>
     </item>
-    <item row="3" column="0" colspan="3">
+    <item row="2" column="1" colspan="6">
      <widget class="GraphicsView" name="networkPlotView"/>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLabel" name="label_logo">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;br/&gt;&lt;img src=&quot;:/icons/bitnomon64.png&quot;/&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;by Jacob Welsh&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
     </item>
    </layout>
    <zorder>group_basic</zorder>
@@ -336,6 +343,7 @@
    <zorder>group_traffic</zorder>
    <zorder>memPoolPlotView</zorder>
    <zorder>networkPlotView</zorder>
+   <zorder>label_logo</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

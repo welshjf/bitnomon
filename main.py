@@ -16,6 +16,7 @@ import qbitcoinrpc
 import rrdmodel
 import rrdplot
 from formatting import *
+from age import *
 
 if sys.version_info[0] > 2:
     unicode = str
@@ -98,9 +99,10 @@ class MainWindow(QtGui.QMainWindow):
         traf_intervals = traf_samples - 1
         self.trafSent = rrdmodel.RRA(traf_samples)
         self.trafRecv = rrdmodel.RRA(traf_samples)
-        # Plot speeds using descending age in minutes, to match mempool
+        # Plot traffic and mempool on a consistent scale
         self.trafPlotDomain = numpy.array(
-                tuple(seconds/60. for seconds in xrange(-traf_intervals+1,1)))
+                tuple(ageOfTime(traf_intervals, s) for s in
+                    xrange(1,traf_intervals+1)))
 
         # Keep a long-term database of traffic data using RRDtool.
         self.trafRRD = rrdmodel.RRDModel(data_dir)
@@ -122,15 +124,18 @@ class MainWindow(QtGui.QMainWindow):
                 pen=(0,255,0), fillLevel=0, brush=(0,255,0,100))
         self.networkPlot.addItem(self.trafSentPlot)
         self.networkPlot.addItem(self.trafRecvPlot)
+        self.networkPlot.invertX()
         self.ui.networkPlotView.setCentralWidget(self.networkPlot)
 
         self.memPoolPlot = pyqtgraph.PlotItem(
                 name='mempool',
                 left=(self.tr('Fee'), 'BTC/kB'),
-                bottom=(self.tr('Age (minutes)'),),
+                bottom=(self.tr('Age'), self.tr('minutes')),
+                axisItems={'bottom': AgeAxisItem('bottom')},
                 )
         self.memPoolPlot.setXLink('traffic')
         self.memPoolPlot.showGrid(x=True, y=True)
+        self.memPoolPlot.invertX()
         # Use the scatter plot API directly, because going through PlotDataItem
         # has strange complications.
         self.memPoolScatterPlot = pyqtgraph.ScatterPlotItem([],
@@ -273,10 +278,9 @@ class MainWindow(QtGui.QMainWindow):
         positions = numpy.empty((len(transactions), 2))
         idx_iter = iter(xrange(len(transactions)))
         for tx in transactions:
-            age = (float(tx['time']) - now) / 60.
             fee = float(tx['fee']) / math.ceil(float(tx['size'])/1000.)
             i = next(idx_iter)
-            positions[i] = (age,fee)
+            positions[i] = (ageOfTime(now, float(tx['time'])), fee)
             if int(tx['currentpriority']) >= minFreePriority:
                 pens[i] = redPen
 
@@ -288,7 +292,7 @@ class MainWindow(QtGui.QMainWindow):
         # Draw block lines
         for blockTime in self.blockRecvTimes:
             if blockTime is not None:
-                self.memPoolPlot.addLine(x=(blockTime - now)/60.)
+                self.memPoolPlot.addLine(x=ageOfTime(now, blockTime))
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, err, err_str):

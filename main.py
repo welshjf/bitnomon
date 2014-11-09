@@ -1,8 +1,14 @@
+#pylint: disable=invalid-name, star-args, no-member
+# no-member gives too much trouble with numpy and pyqtgraph idioms.
+
+"""Main window and program entry point"""
+
 import sys
 import os
 import time
 import math
 import traceback
+import signal
 
 from qtwrapper import QtCore, QtGui, QtNetwork
 import numpy
@@ -15,30 +21,45 @@ import perfprobe
 import qbitcoinrpc
 import rrdmodel
 import rrdplot
-from formatting import *
-from age import *
+import formatting
+from age import ageOfTime, AgeAxisItem
 
 if sys.version_info[0] > 2:
+    #pylint: disable=redefined-builtin
     unicode = str
     xrange = range
 
+# Must be global to avoid crash at exit
+qApp = None
+
 # Bitnomon global settings (these don't go in bitcoinconf because they're not
 # part of Bitcoin Core)
-# TODO: move these out of global scope.
-debug = False
-# QDesktopServices.DataLocation doesn't give the desired result.
-# QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
-# TODO: support other platforms
-data_dir = os.path.expanduser('~/.local/share/Bitnomon')
+DEBUG = False
+DATA_DIR = ''
 
-# Registry of sequential API requests and slots.
-# Each element is a triple of the API method (str), method arguments (tuple),
-# and response handler slot (function).
-# Populated by the chainRequest decorator in MainWindow.
+# API requests are chained sequentially (doesn't seem to work reliably if
+# QNetworkAccessManager parallelizes them).
 commandChain = []
+def chainRequest(method, *args):
+    """Decorator to register an API request in the chain. Parameters are the
+    API method name and optional arguments. The decorated function is the slot
+    that handles the reply."""
+    #pylint: disable=bare-except,missing-docstring
+    def decorator(responseHandler):
+        def handlerWrapper(self, data):
+            try:
+                responseHandler(self, data)
+            except:
+                traceback.print_exc()
+            self.nextChainedRequest()
+        commandChain.append((method, args, handlerWrapper))
+        return handlerWrapper
+    return decorator
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self, conf={}, parent=None):
+    #pylint: disable=missing-docstring,too-many-instance-attributes
+
+    def __init__(self, conf, parent=None):
         super(MainWindow, self).__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -48,10 +69,10 @@ class MainWindow(QtGui.QMainWindow):
         self._setupStatusBar()
         self._setupPlots()
 
-        if conf.get('testnet','0') == '1':
+        if conf.get('testnet', '0') == '1':
             self.setWindowTitle(self.windowTitle() + ' [testnet]')
 
-        self.byteFormatter = ByteCountFormatter()
+        self.byteFormatter = formatting.ByteCountFormatter()
 
         self.proxy = qbitcoinrpc.RPCProxy(conf)
         self.busy = False
@@ -61,18 +82,19 @@ class MainWindow(QtGui.QMainWindow):
         self.timer.start(1000)
         QtCore.QTimer.singleShot(0, self.update)
 
-        if debug:
+        if DEBUG:
             self.perfProbe = perfprobe.PerfProbe(self)
             self.perfProbe.updated.connect(self.updateStatusRSS)
 
     def _setupMenus(self):
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'));
-        self.ui.action_Quit.setIcon(icon);
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'));
-        self.ui.action_FullScreen.setIcon(icon);
+        #pylint: disable=attribute-defined-outside-init
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'))
+        self.ui.action_Quit.setIcon(icon)
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'))
+        self.ui.action_FullScreen.setIcon(icon)
         self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'));
-        self.ui.action_About.setIcon(icon);
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'))
+        self.ui.action_About.setIcon(icon)
         self.ui.action_About.triggered.connect(self.about)
 
         self.ui.action_NetUnits.setSeparator(True)
@@ -83,18 +105,22 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.action_NetUnitByteSI.setChecked(True)
         self.ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
         self.ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
-        self.ui.action_NetUnitByteBinary.triggered.connect(self.netUnitByteBinary)
+        self.ui.action_NetUnitByteBinary.triggered.connect(
+                self.netUnitByteBinary)
 
     def _setupStatusBar(self):
+        #pylint: disable=attribute-defined-outside-init
         self.statusNetwork = QtGui.QLabel()
         self.ui.statusBar.addWidget(self.statusNetwork, 1)
         self.statusMissedSamples = QtGui.QLabel()
         self.ui.statusBar.addWidget(self.statusMissedSamples, 0)
-        if debug:
+        if DEBUG:
             self.statusRSS = QtGui.QLabel()
             self.ui.statusBar.addWidget(self.statusRSS, 0)
 
     def _setupPlots(self):
+        #pylint: disable=attribute-defined-outside-init
+
         # Keep 10 minutes of one-second resolution traffic counter data.
         # (Actually one poll interval, which is assumed to be one second)
         traf_samples = 600
@@ -104,10 +130,10 @@ class MainWindow(QtGui.QMainWindow):
         # Plot traffic and mempool on a consistent scale
         self.trafPlotDomain = numpy.array(
                 tuple(ageOfTime(traf_intervals, s) for s in
-                    xrange(1,traf_intervals+1)))
+                    xrange(1, traf_intervals+1)))
 
         # Keep a long-term database of traffic data using RRDtool.
-        self.trafRRD = rrdmodel.RRDModel(data_dir)
+        self.trafRRD = rrdmodel.RRDModel(DATA_DIR)
 
         # Keep the last ~4 hours of block arrival times, as seen by Bitnomon,
         # since the bitcoin API doesn't provide this.
@@ -121,9 +147,9 @@ class MainWindow(QtGui.QMainWindow):
         self.networkPlot.showGrid(y=True)
         self.networkPlot.hideAxis('bottom')
         self.trafSentPlot = rrdplot.RRDPlotItem(numpy.zeros(traf_intervals),
-                pen=(255,0,0), fillLevel=0, brush=(255,0,0,100))
+                pen=(255, 0, 0), fillLevel=0, brush=(255, 0, 0, 100))
         self.trafRecvPlot = rrdplot.RRDPlotItem(numpy.zeros(traf_intervals),
-                pen=(0,255,0), fillLevel=0, brush=(0,255,0,100))
+                pen=(0, 255, 0), fillLevel=0, brush=(0, 255, 0, 100))
         self.networkPlot.addItem(self.trafSentPlot)
         self.networkPlot.addItem(self.trafRecvPlot)
         self.networkPlot.invertX()
@@ -141,7 +167,8 @@ class MainWindow(QtGui.QMainWindow):
         # Use the scatter plot API directly, because going through PlotDataItem
         # has strange complications.
         self.memPoolScatterPlot = pyqtgraph.ScatterPlotItem([],
-            symbol='t', size=10, brush=(255,255,255,50), pen=None, pxMode=True)
+            symbol='t', size=10, brush=(255, 255, 255, 50),
+            pen=None, pxMode=True)
         self.memPoolPlot.addItem(self.memPoolScatterPlot)
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
@@ -161,7 +188,7 @@ class MainWindow(QtGui.QMainWindow):
         self.byteFormatter.setPrefixBinary()
 
     @QtCore.Slot(QtGui.QResizeEvent)
-    def resizeEvent(self, event):
+    def resizeEvent(self, _):
         fullScreen = bool(self.windowState() & QtCore.Qt.WindowFullScreen)
         if fullScreen != self.isFullScreen:
             self.ui.action_FullScreen.setChecked(fullScreen)
@@ -183,22 +210,8 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.startChain()
 
-    # Chain requests sequentially (doesn't seem to work reliably if
-    # QNetworkAccessManager parallelizes them)
-
-    def chainRequest(method, *args):
-        def decorator(responseHandler):
-            def handlerWrapper(self, data):
-                try:
-                    responseHandler(self, data)
-                except:
-                    traceback.print_exc()
-                self.nextChainedRequest()
-            commandChain.append((method, args, handlerWrapper))
-            return handlerWrapper
-        return decorator
-
     def startChain(self):
+        #pylint: disable=attribute-defined-outside-init
         self.chainIndex = 0
         self.replies = []
         # Lock the chain to avoid sending more requests if the previous ones
@@ -231,6 +244,8 @@ class MainWindow(QtGui.QMainWindow):
             self.lastBlockCount = blocks
         else:
             if blocks > self.lastBlockCount:
+                #pylint: disable=attribute-defined-outside-init
+                # ^ false positive?
                 self.lastBlockCount = blocks
                 self.blockRecvTimes.update(time.time())
 
@@ -284,7 +299,7 @@ class MainWindow(QtGui.QMainWindow):
         now = time.time()
         transactions = pool.values()
         minFreePriority = bitcoinconf.COIN * 144 // 250
-        redPen = pyqtgraph.mkPen((255,0,0,100))
+        redPen = pyqtgraph.mkPen((255, 0, 0, 100))
         pens = [None]*len(transactions)
         positions = numpy.empty((len(transactions), 2))
         idx_iter = iter(xrange(len(transactions)))
@@ -306,9 +321,9 @@ class MainWindow(QtGui.QMainWindow):
                 self.memPoolPlot.addLine(x=ageOfTime(now, blockTime))
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
-    def netError(self, err, err_str):
+    def netError(self, _, err_str):
         err_str = 'Network error: {}'.format(err_str)
-        if debug:
+        if DEBUG:
             sys.stderr.write(err_str + '\n')
         self.statusNetwork.setText(err_str)
         self.busy = False
@@ -323,17 +338,16 @@ class MainWindow(QtGui.QMainWindow):
         self.statusRSS.setText('RSS: %s' %
             self.byteFormatter.format(self.perfProbe.rss))
 
-def main(argv):
+def load_config(argv):
 
-    # pyqtgraph's exit crash workaround seems to do more harm than good.
-    pyqtgraph.setConfigOption('exitCleanup', False)
+    "Parse arguments, do global setup, and return a bitcoinconf."
 
     # Parse arguments
     datadir = None
     conffile = 'bitcoin.conf'
     testnet = False
     for arg in argv[1:]:
-        parts = arg.split('=',1)
+        parts = arg.split('=', 1)
         if parts[0] == '-datadir':
             if len(parts) == 2:
                 datadir = parts[1]
@@ -347,8 +361,8 @@ def main(argv):
         elif arg == '-testnet':
             testnet = True
         elif arg == '-d' or arg == '-debug':
-            global debug
-            debug = True
+            global DEBUG
+            DEBUG = True
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
 
@@ -364,11 +378,32 @@ def main(argv):
     QtGui.qApp.setOrganizationDomain('eemta.org')
     QtGui.qApp.setApplicationName('Bitnomon')
     # QSettings stuff goes here
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
 
-    # Enter event loop
+    # QDesktopServices.DataLocation doesn't give the desired result.
+    # QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
+    # TODO: support other platforms
+    global DATA_DIR
+    DATA_DIR = os.path.expanduser('~/.local/share/Bitnomon')
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+
+    return conf
+
+def main(argv):
+
+    "Main entry point of the program"
+
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    global qApp #pylint: disable=global-statement
+    qApp = QtGui.QApplication(argv)
+
+    # pyqtgraph's exit crash workaround seems to do more harm than good.
+    pyqtgraph.setConfigOption('exitCleanup', False)
+
+    conf = load_config(argv)
+
     try:
+        #pylint: disable=bare-except
         mainWin = MainWindow(conf)
         mainWin.show()
         return QtGui.qApp.exec_()

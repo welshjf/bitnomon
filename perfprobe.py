@@ -21,7 +21,7 @@ class PerfProbe(QtCore.QObject):
         self.probeTimer.start(1000)
         QtCore.QTimer.singleShot(0, self.run)
 
-        if main.debug:
+        if main.DEBUG:
             self.logTimer = QtCore.QTimer(self)
             self.logTimer.timeout.connect(self.logCSV)
             self.logTimer.start(1000*60)

@@ -57,7 +57,8 @@ def chainRequest(method, *args):
     return decorator
 
 class MainWindow(QtGui.QMainWindow):
-    #pylint: disable=missing-docstring,too-many-instance-attributes
+    #pylint: disable=missing-docstring, too-many-instance-attributes
+    #pylint: disable=too-many-public-methods
 
     def __init__(self, conf, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -107,6 +108,11 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
         self.ui.action_NetUnitByteBinary.triggered.connect(
                 self.netUnitByteBinary)
+
+        # Any actions with keyboard shortcuts need to be added to the main
+        # window to keep working when the menu bar is hidden :(
+        self.addAction(self.ui.action_Quit)
+        self.addAction(self.ui.action_FullScreen)
 
     def _setupStatusBar(self):
         #pylint: disable=attribute-defined-outside-init
@@ -189,6 +195,7 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.Slot(QtGui.QResizeEvent)
     def resizeEvent(self, _):
+        # Synchronize with being full-screened by the window manager
         fullScreen = bool(self.windowState() & QtCore.Qt.WindowFullScreen)
         if fullScreen != self.isFullScreen:
             self.ui.action_FullScreen.setChecked(fullScreen)
@@ -198,10 +205,25 @@ class MainWindow(QtGui.QMainWindow):
         self.isFullScreen = enable
         if enable:
             self.showFullScreen()
-            self.ui.label_logo.show()
+            self.installEventFilter(self)
         else:
             self.showNormal()
-            self.ui.label_logo.hide()
+            self.removeEventFilter(self)
+        self.ui.label_logo.setVisible(enable)
+        self.menuBar().setVisible(not enable)
+        self.statusBar().setVisible(not enable)
+
+    def eventFilter(self, _, event):
+        # Show the menu bar when hovering at top of screen in full-screen mode
+        if event.type() == QtCore.QEvent.HoverMove:
+            menuBar = self.menuBar()
+            if menuBar.isVisible():
+                if event.pos().y() > menuBar.height():
+                    menuBar.setVisible(False)
+            else:
+                if event.pos().y() < 1:
+                    menuBar.setVisible(True)
+        return False
 
     def update(self):
         if self.busy:

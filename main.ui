@@ -369,6 +369,7 @@
      <string>&amp;View</string>
     </property>
     <addaction name="action_FullScreen"/>
+    <addaction name="action_ResetZoom"/>
     <addaction name="action_NetUnits"/>
     <addaction name="action_NetUnitBitSI"/>
     <addaction name="action_NetUnitByteSI"/>
@@ -433,6 +434,14 @@
    </property>
    <property name="shortcut">
     <string>F11</string>
+   </property>
+  </action>
+  <action name="action_ResetZoom">
+   <property name="text">
+    <string>&amp;Reset Zoom</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+0</string>
    </property>
   </action>
  </widget>

@@ -65,10 +65,10 @@ class MainWindow(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.label_logo.hide()
-        self.isFullScreen = False
         self._setupMenus()
         self._setupStatusBar()
         self._setupPlots()
+        self.resetZoom()
 
         if conf.get('testnet', '0') == '1':
             self.setWindowTitle(self.windowTitle() + ' [testnet]')
@@ -78,6 +78,8 @@ class MainWindow(QtGui.QMainWindow):
         self.proxy = qbitcoinrpc.RPCProxy(conf)
         self.busy = False
         self.missedSamples = 0
+        self.isFullScreen = False
+        self.lastSampleTime = 0
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(1000)
@@ -91,9 +93,15 @@ class MainWindow(QtGui.QMainWindow):
         #pylint: disable=attribute-defined-outside-init
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'))
         self.ui.action_Quit.setIcon(icon)
+
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'))
         self.ui.action_FullScreen.setIcon(icon)
         self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
+
+        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('zoom-original'))
+        self.ui.action_ResetZoom.setIcon(icon)
+        self.ui.action_ResetZoom.triggered.connect(self.resetZoom)
+
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'))
         self.ui.action_About.setIcon(icon)
         self.ui.action_About.triggered.connect(self.about)
@@ -113,6 +121,7 @@ class MainWindow(QtGui.QMainWindow):
         # window to keep working when the menu bar is hidden :(
         self.addAction(self.ui.action_Quit)
         self.addAction(self.ui.action_FullScreen)
+        self.addAction(self.ui.action_ResetZoom)
 
     def _setupStatusBar(self):
         #pylint: disable=attribute-defined-outside-init
@@ -164,7 +173,7 @@ class MainWindow(QtGui.QMainWindow):
         self.memPoolPlot = pyqtgraph.PlotItem(
                 name='mempool',
                 left=(self.tr('Fee'), 'BTC/kB'),
-                bottom=(self.tr('Age'), self.tr('minutes')),
+                bottom=(self.tr('Age'), self.tr('d:h:m')),
                 axisItems={'bottom': AgeAxisItem('bottom')},
                 )
         self.memPoolPlot.setXLink('traffic')
@@ -192,6 +201,54 @@ class MainWindow(QtGui.QMainWindow):
     def netUnitByteBinary(self):
         self.byteFormatter.setUnitBytes()
         self.byteFormatter.setPrefixBinary()
+
+    def plotNetTotals(self):
+        # Find boundary between RRD averages and full-resolution data
+        oldestFullResIndex = 0
+        numFullResSamples = len(self.trafPlotDomain)
+        while oldestFullResIndex < numFullResSamples:
+            if self.trafRecv[oldestFullResIndex] is not None:
+                break
+            oldestFullResIndex += 1
+        if oldestFullResIndex == numFullResSamples:
+            oldestFullResAge = 0
+        else:
+            oldestFullResAge = self.trafPlotDomain[oldestFullResIndex]
+
+        # Load the RRD averages
+        ages = []
+        recv = []
+        sent = []
+        removeNone = lambda v: 0 if v is None else v
+        sampleTime = self.lastSampleTime
+        for (t, values) in self.trafRRD.fetch_all():
+            age = ageOfTime(sampleTime, t)
+            if age > oldestFullResAge:
+                ages.append(age)
+                recv.append(removeNone(values[0]))
+                sent.append(removeNone(values[1]))
+            else:
+                break
+
+        # Interpolate with next average to avoid jumpy lines at the boundary
+        prevAge = ages[-1]
+        if age != prevAge:
+            #pylint: disable=undefined-loop-variable
+            ages.append(oldestFullResAge)
+            blend = (oldestFullResAge - age) / (prevAge - age)
+            interpolate = lambda a, b: a*(1.0-blend) + b*blend
+            recv.append(interpolate(removeNone(values[0]), recv[-1]))
+            sent.append(interpolate(removeNone(values[1]), sent[-1]))
+            oldestFullResIndex += 1
+
+        # Add the full-resolution data
+        ages.extend(self.trafPlotDomain[oldestFullResIndex:])
+        recv.extend(tuple(self.trafRecv.differences(0))[oldestFullResIndex:])
+        sent.extend(tuple(self.trafSent.differences(0))[oldestFullResIndex:])
+
+        # Plot it all
+        self.trafRecvPlot.setData(ages, recv)
+        self.trafSentPlot.setData(ages, sent)
 
     @QtCore.Slot(QtGui.QResizeEvent)
     def resizeEvent(self, _):
@@ -224,6 +281,12 @@ class MainWindow(QtGui.QMainWindow):
                 if event.pos().y() < 1:
                     menuBar.setVisible(True)
         return False
+
+    @QtCore.Slot()
+    def resetZoom(self):
+        self.networkPlot.setXRange(0, 10, padding=.02)
+        self.networkPlot.enableAutoRange(axis=pyqtgraph.ViewBox.YAxis)
+        self.memPoolPlot.enableAutoRange(axis=pyqtgraph.ViewBox.YAxis)
 
     def update(self):
         if self.busy:
@@ -307,14 +370,11 @@ class MainWindow(QtGui.QMainWindow):
                 format_speed(self.trafSent.difference(-1, -61), 60))
 
         # Update RRDtool database for long-term traffic data
-        self.trafRRD.update(totals['timemillis'], (recv, sent))
-
-        self.trafSentPlot.setData(
-                self.trafPlotDomain,
-                self.trafSent.differences(0))
-        self.trafRecvPlot.setData(
-                self.trafPlotDomain,
-                self.trafRecv.differences(0))
+        sampleTime = totals['timemillis']
+        self.trafRRD.update(sampleTime, (recv, sent))
+        self.lastSampleTime = sampleTime // 1000
+        # Postpone updating the plot until updateMemPool so they can redraw at
+        # the same time
 
     @chainRequest('getrawmempool', True)
     def updateMemPool(self, pool):
@@ -341,6 +401,7 @@ class MainWindow(QtGui.QMainWindow):
         for blockTime in self.blockRecvTimes:
             if blockTime is not None:
                 self.memPoolPlot.addLine(x=ageOfTime(now, blockTime))
+        self.plotNetTotals()
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, _, err_str):

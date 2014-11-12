@@ -100,8 +100,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.action_FullScreen.setIcon(icon)
         self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
 
-        self.ui.action_StatusBar.toggled.connect(self.statusBar().setVisible)
-
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('zoom-original'))
         self.ui.action_ResetZoom.setIcon(icon)
         self.ui.action_ResetZoom.triggered.connect(self.resetZoom)
@@ -109,6 +107,10 @@ class MainWindow(QtGui.QMainWindow):
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'))
         self.ui.action_About.setIcon(icon)
         self.ui.action_About.triggered.connect(self.about)
+
+        icon = QtGui.QIcon(':/trolltech/qmessagebox/images/qtlogo-64.png')
+        self.ui.action_AboutQt.setIcon(icon)
+        self.ui.action_AboutQt.triggered.connect(QtGui.qApp.aboutQt)
 
         self.ui.action_NetUnits.setSeparator(True)
         self.ui.netUnitGroup = QtGui.QActionGroup(self)
@@ -382,6 +384,7 @@ class MainWindow(QtGui.QMainWindow):
 
     @chainRequest('getrawmempool', True)
     def updateMemPool(self, pool):
+        self.plotNetTotals()
         now = time.time()
         transactions = pool.values()
         minFreePriority = bitcoinconf.COIN * 144 // 250
@@ -405,7 +408,6 @@ class MainWindow(QtGui.QMainWindow):
         for blockTime in self.blockRecvTimes:
             if blockTime is not None:
                 self.memPoolPlot.addLine(x=ageOfTime(now, blockTime))
-        self.plotNetTotals()
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, _, err_str):

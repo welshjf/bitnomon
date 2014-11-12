@@ -363,6 +363,7 @@
      <string>&amp;Help</string>
     </property>
     <addaction name="action_About"/>
+    <addaction name="action_AboutQt"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
@@ -391,7 +392,7 @@
   </action>
   <action name="action_About">
    <property name="text">
-    <string>&amp;About</string>
+    <string>&amp;About Bitnomon</string>
    </property>
   </action>
   <action name="action_NetUnitBitSI">
@@ -456,6 +457,11 @@
     <string>&amp;Status Bar</string>
    </property>
   </action>
+  <action name="action_AboutQt">
+   <property name="text">
+    <string>About &amp;Qt</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -481,6 +487,22 @@
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_StatusBar</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>statusBar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>423</x>
+     <y>662</y>
     </hint>
    </hints>
   </connection>

@@ -65,10 +65,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.label_logo.hide()
-        self._setupMenus()
-        self._setupStatusBar()
-        self._setupPlots()
-        self.resetZoom()
 
         if conf.get('testnet', '0') == '1':
             self.setWindowTitle(self.windowTitle() + ' [testnet]')
@@ -85,6 +81,12 @@ class MainWindow(QtGui.QMainWindow):
         self.timer.start(1000)
         QtCore.QTimer.singleShot(0, self.update)
 
+        self._setupMenus()
+        self._setupStatusBar()
+        self._setupPlots()
+        self.resetZoom()
+        self.ui.action_StatusBar.setChecked(DEBUG)
+
         if DEBUG:
             self.perfProbe = perfprobe.PerfProbe(self)
             self.perfProbe.updated.connect(self.updateStatusRSS)
@@ -97,6 +99,8 @@ class MainWindow(QtGui.QMainWindow):
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'))
         self.ui.action_FullScreen.setIcon(icon)
         self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
+
+        self.ui.action_StatusBar.toggled.connect(self.statusBar().setVisible)
 
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('zoom-original'))
         self.ui.action_ResetZoom.setIcon(icon)
@@ -129,6 +133,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.statusBar.addWidget(self.statusNetwork, 1)
         self.statusMissedSamples = QtGui.QLabel()
         self.ui.statusBar.addWidget(self.statusMissedSamples, 0)
+        self.updateStatusMissedSamples()
         if DEBUG:
             self.statusRSS = QtGui.QLabel()
             self.ui.statusBar.addWidget(self.statusRSS, 0)
@@ -268,7 +273,6 @@ class MainWindow(QtGui.QMainWindow):
             self.removeEventFilter(self)
         self.ui.label_logo.setVisible(enable)
         self.menuBar().setVisible(not enable)
-        self.statusBar().setVisible(not enable)
 
     def eventFilter(self, _, event):
         # Show the menu bar when hovering at top of screen in full-screen mode

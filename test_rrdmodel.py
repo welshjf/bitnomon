@@ -10,37 +10,88 @@ import rrdmodel
 
 class RRDModelTest(unittest.TestCase):
 
-    @mock.patch('rrdmodel.os.path.exists')
-    @mock.patch('rrdmodel.RRDModel.create')
-    def setUp(self, mock_create, mock_path_exists):
-        mock_path_exists.return_value = False
-        self.model = rrdmodel.RRDModel('test_data_dir')
-        self.mock_create = mock_create
+    def setUp(self):
+        with mock.patch('rrdmodel.RRDModel.create') as mock_create:
+            self.mock_create = mock_create
+            with mock.patch('rrdmodel.os.path.exists') as mock_path_exists:
+                mock_path_exists.return_value = False
+                self.model = rrdmodel.RRDModel('test_data_dir')
+        self.patcher = mock.patch('rrdmodel.rrdtool')
+        self.mock_rrdtool = self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_init(self):
         self.mock_create.assert_called_once_with()
 
-    @mock.patch('rrdmodel.rrdtool')
-    def test_create(self, mock_rrdtool):
+    def test_create(self):
         self.model.create()
-        self.assertEqual(mock_rrdtool.create.called, True)
+        self.assertEqual(self.mock_rrdtool.create.called, True)
 
-    @mock.patch('rrdmodel.rrdtool')
-    def test_update(self, mock_rrdtool):
+    def test_update(self):
         self.model.update(0, (1, 2))
-        self.assertEqual(mock_rrdtool.update.called, True)
+        self.assertEqual(self.mock_rrdtool.update.called, True)
 
-    @mock.patch('rrdmodel.rrdtool')
-    def test_fetch(self, mock_rrdtool):
-        mock_rrdtool.fetch.return_value = [
-            (0,30,10),
-            ('a','b'),
-            [(None,None), (1,2), (3,4)]
+    def test_fetch(self):
+        self.mock_rrdtool.fetch.return_value = [
+            (0, 30, 10),
+            ('a', 'b'),
+            [(None, 0), (1, 2), (3, 4)]
         ]
         self.assertEqual(
-            self.model.fetch(0,30,10),
-            [(20, (1,2)), (30, (3,4))]
+            list(self.model.fetch(1, 31, 10)),
+            [
+                (0, (None, 0)),
+                (10, (1, 2)),
+                (20, (3, 4)),
+            ]
         )
+
+    def test_fetch_all(self):
+        def mock_fetch(start, end, res):
+            times = range(start - (start % res), end - (end % res) + 1, res)
+            values = [(time, time) for time in times]
+            return zip(times, values)
+        self.model.fetch = mock_fetch
+
+        def assertIncreasing(times):
+            for i in range(len(times)-1):
+                cur = times[i]
+                nxt = times[i+1]
+                if nxt <= cur:
+                    raise AssertionError(
+                        'Non-increasing elements %d: %d and %d: %d out of %d' %
+                        (i, cur, i+1, nxt, len(times)))
+
+        # Check the times at the junction of two resolution levels, where the
+        # latest sample is a multiple of the coarser resolution
+        year = 60*60*24*365
+        self.mock_rrdtool.last.return_value = year
+        times = tuple(zip(*self.model.fetch_all()))[0]
+        assertIncreasing(times)
+        self.assertEqual(times[0], 0)
+        self.assertEqual(times[-1], year)
+        self.assertEqual(times[-61], year - 3600)
+        self.assertEqual(times[-62], year - 3600 - 600)
+
+        # And where it's just above one
+        self.mock_rrdtool.last.return_value = year + 1
+        times = tuple(zip(*self.model.fetch_all()))[0]
+        assertIncreasing(times)
+        self.assertEqual(times[0], 0)
+        self.assertEqual(times[-1], year)
+        self.assertEqual(times[-61], year - 3600)
+        self.assertEqual(times[-62], year - 3600 - 600)
+
+        # And where it's just below one
+        self.mock_rrdtool.last.return_value = year + 599
+        times = tuple(zip(*self.model.fetch_all()))[0]
+        assertIncreasing(times)
+        self.assertEqual(times[0], 0)
+        self.assertEqual(times[-1], year + 540)
+        self.assertEqual(times[-61], year - 3600 + 540)
+        self.assertEqual(times[-62], year - 3600)
 
 class RRATest(unittest.TestCase):
 

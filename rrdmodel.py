@@ -2,7 +2,13 @@ import sys
 import os
 import time
 import decimal
-import rrdtool
+
+if sys.version_info[0] > 2:
+    # Allow unit tests to work on Python 3 even though the rrdtool binding
+    # doesn't yet.
+    rrdtool = None
+else:
+    import rrdtool
 
 import main
 
@@ -13,6 +19,14 @@ class RRDModel(object):
     # Needs refactoring into a generic RRDModel base class and a specific
     # implementation for traffic data.
 
+    step = 60
+    consolidation = (
+        (1, 60),     # every minute for an hour
+        (10, 144),   # every 10 mins for a day
+        (60, 168),   # every hour for a week
+        (1440, 365), # every day for a year
+    )
+
     def __init__(self, data_dir):
         self.rrd_file = os.path.join(data_dir, 'traffic.rrd')
         if not os.path.exists(self.rrd_file):
@@ -21,19 +35,15 @@ class RRDModel(object):
     def create(self):
         "Create a new RRD file."
         data_source_type = 'COUNTER'
-        # the black magic that is rrd_parsetime.c doesn't accept a second count
-        # before 1980
-        start = bytes(60*60*24*365*10+1)
-        step = '60'
-        heartbeat = '60'
+        # would prefer start = 0, but the black magic that is rrd_parsetime.c
+        # doesn't accept a second count before 1980
+        start = str(86400*365*11)
+        step = str(self.step)
+        heartbeat = step
         min_val = '0'
         max_val = 'U'
-        consolidation = (
-            'RRA:AVERAGE:0.5:1:60',     # every minute for an hour
-            'RRA:AVERAGE:0.5:10:144',   # every 10 mins for a day
-            'RRA:AVERAGE:0.5:60:168',   # every hour for a week
-            'RRA:AVERAGE:0.5:1440:365', # every day for a year
-        )
+        consolidation = ['RRA:AVERAGE:0.5:%d:%d' % (res, count)
+            for (res, count) in self.consolidation]
         args = [self.rrd_file, '--start', start, '--step', step]
         args.append(':'.join(('DS', 'inbound', data_source_type, heartbeat,
                 min_val, max_val)))
@@ -61,7 +71,8 @@ class RRDModel(object):
         start -- integer start time in seconds since the epoch, or negative for
                  relative to end
         end -- integer end time in seconds since the epoch, or None for current
-               time"""
+               time
+        resolution -- resolution in seconds"""
         if end is None:
             end = int(time.time())
         if start < 0:
@@ -74,14 +85,24 @@ class RRDModel(object):
                 '-e', str(int(end)),
                 '-r', str(resolution))
         ts_start, ts_end, ts_res = time_span
-        times = range(ts_start+ts_res, ts_end+ts_res, ts_res)
-        def defined(row):
-            t, vals = row
-            for val in vals:
-                if val is None:
-                    return False
-            return True
-        return filter(defined, zip(times, values))
+        times = range(ts_start, ts_end, ts_res)
+        return zip(times, values)
+
+    def fetch_all(self):
+        step = self.step
+        latest = rrdtool.last(self.rrd_file)
+        consolidation = tuple(reversed(sorted(self.consolidation)))
+        result = []
+        for i in range(len(consolidation)):
+            res, count = consolidation[i]
+            start = latest - step*res*count
+            if i+1 < len(consolidation):
+                nextRes, nextCount = consolidation[i+1]
+                end = latest - step*nextRes*(nextCount+1)
+            else:
+                end = latest
+            result.extend(self.fetch(start, end, step*res))
+        return result
 
 class RRA(object):
 

@@ -75,7 +75,6 @@ class MainWindow(QtGui.QMainWindow):
         self.busy = False
         self.missedSamples = 0
         self.isFullScreen = False
-        self.lastSampleTime = 0
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(1000)
@@ -145,14 +144,16 @@ class MainWindow(QtGui.QMainWindow):
 
         # Keep 10 minutes of one-second resolution traffic counter data.
         # (Actually one poll interval, which is assumed to be one second)
-        traf_samples = 600
+        poll_interval = 1 # seconds
+        traf_samples = int(600./poll_interval)
         traf_intervals = traf_samples - 1
         self.trafSent = rrdmodel.RRA(traf_samples)
         self.trafRecv = rrdmodel.RRA(traf_samples)
         # Plot traffic and mempool on a consistent scale
-        self.trafPlotDomain = numpy.array(
-                tuple(ageOfTime(traf_intervals, s) for s in
-                    xrange(1, traf_intervals+1)))
+        self.trafPlotDomain = tuple(
+            poll_interval*ageOfTime(traf_intervals, s)
+            for s in xrange(1, traf_intervals+1)
+        )
 
         # Keep a long-term database of traffic data using RRDtool.
         self.trafRRD = rrdmodel.RRDModel(DATA_DIR)
@@ -211,25 +212,20 @@ class MainWindow(QtGui.QMainWindow):
 
     def plotNetTotals(self):
         # Find boundary between RRD averages and full-resolution data
-        oldestFullResIndex = 0
-        numFullResSamples = len(self.trafPlotDomain)
-        while oldestFullResIndex < numFullResSamples:
+        oldestFullResAge = 0
+        for oldestFullResIndex in xrange(len(self.trafPlotDomain)):
             if self.trafRecv[oldestFullResIndex] is not None:
+                oldestFullResAge = self.trafPlotDomain[oldestFullResIndex]
                 break
-            oldestFullResIndex += 1
-        if oldestFullResIndex == numFullResSamples:
-            oldestFullResAge = 0
-        else:
-            oldestFullResAge = self.trafPlotDomain[oldestFullResIndex]
 
         # Load the RRD averages
         ages = []
         recv = []
         sent = []
         removeNone = lambda v: 0 if v is None else v
-        sampleTime = self.lastSampleTime
+        now = int(time.time())
         for (t, values) in self.trafRRD.fetch_all():
-            age = ageOfTime(sampleTime, t)
+            age = ageOfTime(now, t)
             if age > oldestFullResAge:
                 ages.append(age)
                 recv.append(removeNone(values[0]))
@@ -238,15 +234,16 @@ class MainWindow(QtGui.QMainWindow):
                 break
 
         # Interpolate with next average to avoid jumpy lines at the boundary
-        prevAge = ages[-1]
-        if age != prevAge:
-            #pylint: disable=undefined-loop-variable
-            ages.append(oldestFullResAge)
-            blend = (oldestFullResAge - age) / (prevAge - age)
-            interpolate = lambda a, b: a*(1.0-blend) + b*blend
-            recv.append(interpolate(removeNone(values[0]), recv[-1]))
-            sent.append(interpolate(removeNone(values[1]), sent[-1]))
-            oldestFullResIndex += 1
+        if len(ages) > 0:
+            prevAge = ages[-1]
+            if age != prevAge:
+                #pylint: disable=undefined-loop-variable
+                ages.append(oldestFullResAge)
+                blend = (oldestFullResAge - age) / (prevAge - age)
+                interpolate = lambda a, b: a*(1.0-blend) + b*blend
+                recv.append(interpolate(removeNone(values[0]), recv[-1]))
+                sent.append(interpolate(removeNone(values[1]), sent[-1]))
+                oldestFullResIndex += 1
 
         # Add the full-resolution data
         ages.extend(self.trafPlotDomain[oldestFullResIndex:])
@@ -378,7 +375,6 @@ class MainWindow(QtGui.QMainWindow):
         # Update RRDtool database for long-term traffic data
         sampleTime = totals['timemillis']
         self.trafRRD.update(sampleTime, (recv, sent))
-        self.lastSampleTime = sampleTime // 1000
         # Postpone updating the plot until updateMemPool so they can redraw at
         # the same time
 
@@ -411,11 +407,12 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.Slot(QtNetwork.QNetworkReply.NetworkError, str)
     def netError(self, _, err_str):
+        self.busy = False
         err_str = 'Network error: {}'.format(err_str)
         if DEBUG:
             sys.stderr.write(err_str + '\n')
         self.statusNetwork.setText(err_str)
-        self.busy = False
+        self.plotNetTotals()
 
     @QtCore.Slot()
     def updateStatusMissedSamples(self):

@@ -155,7 +155,7 @@
           </widget>
          </item>
          <item row="3" column="3">
-          <widget class="QLabel" name="lRecv10s">
+          <widget class="QLabel" name="lRecv1m">
            <property name="text">
             <string>-</string>
            </property>
@@ -165,7 +165,7 @@
           </widget>
          </item>
          <item row="5" column="4">
-          <widget class="QLabel" name="lSent1m">
+          <widget class="QLabel" name="lSent10m">
            <property name="text">
             <string>-</string>
            </property>
@@ -175,7 +175,7 @@
           </widget>
          </item>
          <item row="5" column="2">
-          <widget class="QLabel" name="lSent1s">
+          <widget class="QLabel" name="lSent10s">
            <property name="text">
             <string>-</string>
            </property>
@@ -193,7 +193,7 @@
             </font>
            </property>
            <property name="text">
-            <string>1m</string>
+            <string>10m</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -209,7 +209,7 @@
             </font>
            </property>
            <property name="text">
-            <string>1s</string>
+            <string>10s</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -225,7 +225,7 @@
             </font>
            </property>
            <property name="text">
-            <string>10s</string>
+            <string>1m</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -233,7 +233,7 @@
           </widget>
          </item>
          <item row="3" column="4">
-          <widget class="QLabel" name="lRecv1m">
+          <widget class="QLabel" name="lRecv10m">
            <property name="text">
             <string>-</string>
            </property>
@@ -243,7 +243,7 @@
           </widget>
          </item>
          <item row="5" column="3">
-          <widget class="QLabel" name="lSent10s">
+          <widget class="QLabel" name="lSent1m">
            <property name="text">
             <string>-</string>
            </property>
@@ -308,7 +308,7 @@
           </widget>
          </item>
          <item row="3" column="2">
-          <widget class="QLabel" name="lRecv1s">
+          <widget class="QLabel" name="lRecv10s">
            <property name="text">
             <string>-</string>
            </property>

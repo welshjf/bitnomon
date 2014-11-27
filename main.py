@@ -77,7 +77,7 @@ class MainWindow(QtGui.QMainWindow):
         self.isFullScreen = False
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
-        self.timer.start(1000)
+        self.timer.start(2000)
         QtCore.QTimer.singleShot(0, self.update)
 
         self._setupMenus()
@@ -142,9 +142,8 @@ class MainWindow(QtGui.QMainWindow):
     def _setupPlots(self):
         #pylint: disable=attribute-defined-outside-init
 
-        # Keep 10 minutes of one-second resolution traffic counter data.
-        # (Actually one poll interval, which is assumed to be one second)
-        poll_interval = 1 # seconds
+        # Keep 10 minutes of high resolution traffic counter data.
+        poll_interval = 2 # seconds
         traf_samples = int(600./poll_interval)
         traf_intervals = traf_samples - 1
         self.trafSent = rrdmodel.RRA(traf_samples)
@@ -245,10 +244,12 @@ class MainWindow(QtGui.QMainWindow):
                 sent.append(interpolate(removeNone(values[1]), sent[-1]))
                 oldestFullResIndex += 1
 
-        # Add the full-resolution data
+        # Add the full-resolution data (dividing counter differences by the
+        # polling interval to get speeds)
         ages.extend(self.trafPlotDomain[oldestFullResIndex:])
-        recv.extend(tuple(self.trafRecv.differences(0))[oldestFullResIndex:])
-        sent.extend(tuple(self.trafSent.differences(0))[oldestFullResIndex:])
+        sliceScale = lambda i: numpy.array(tuple(i)[oldestFullResIndex:]) / 2
+        recv.extend(sliceScale(self.trafRecv.differences(0)))
+        sent.extend(sliceScale(self.trafSent.differences(0)))
 
         # Plot it all
         self.trafRecvPlot.setData(ages, recv)
@@ -355,22 +356,22 @@ class MainWindow(QtGui.QMainWindow):
         recv = totals['totalbytesrecv']
         self.ui.lRecvTotal.setText(self.byteFormatter.format(recv))
         self.trafRecv.update(recv)
-        self.ui.lRecv1s.setText(
-                format_speed(self.trafRecv.difference(-1, -2), 1))
         self.ui.lRecv10s.setText(
-                format_speed(self.trafRecv.difference(-1, -11), 10))
+                format_speed(self.trafRecv.difference(-1, -6), 10))
         self.ui.lRecv1m.setText(
-                format_speed(self.trafRecv.difference(-1, -61), 60))
+                format_speed(self.trafRecv.difference(-1, -31), 60))
+        self.ui.lRecv10m.setText(
+                format_speed(self.trafRecv.difference(-1, -300), 598))
 
         sent = totals['totalbytessent']
         self.ui.lSentTotal.setText(self.byteFormatter.format(sent))
         self.trafSent.update(sent)
-        self.ui.lSent1s.setText(
-                format_speed(self.trafSent.difference(-1, -2), 1))
         self.ui.lSent10s.setText(
-                format_speed(self.trafSent.difference(-1, -11), 10))
+                format_speed(self.trafSent.difference(-1, -6), 10))
         self.ui.lSent1m.setText(
-                format_speed(self.trafSent.difference(-1, -61), 60))
+                format_speed(self.trafSent.difference(-1, -31), 60))
+        self.ui.lSent10m.setText(
+                format_speed(self.trafSent.difference(-1, -300), 598))
 
         # Update RRDtool database for long-term traffic data
         sampleTime = totals['timemillis']

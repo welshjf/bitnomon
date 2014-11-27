@@ -40,7 +40,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Number of blocks in longest chain</string>
+            <string>Number of blocks in the best chain</string>
            </property>
            <property name="text">
             <string>Blocks</string>
@@ -79,7 +79,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Number of transactions in local mem pool</string>
+            <string>Transactions in the local memory pool</string>
            </property>
            <property name="text">
             <string>Pooled TX</string>
@@ -115,7 +115,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Current network difficulty</string>
+            <string>Network difficulty</string>
            </property>
            <property name="text">
             <string>Difficulty</string>
@@ -145,6 +145,9 @@
              <weight>75</weight>
              <bold>true</bold>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Total data received/sent since node startup</string>
            </property>
            <property name="text">
             <string>Total</string>
@@ -192,6 +195,9 @@
              <bold>true</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>10-minute average</string>
+           </property>
            <property name="text">
             <string>10m</string>
            </property>
@@ -208,6 +214,9 @@
              <bold>true</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>10-second average</string>
+           </property>
            <property name="text">
             <string>10s</string>
            </property>
@@ -223,6 +232,9 @@
              <weight>75</weight>
              <bold>true</bold>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>One-minute average</string>
            </property>
            <property name="text">
             <string>1m</string>

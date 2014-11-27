@@ -8,7 +8,9 @@ else:
 
 import rrdmodel
 
-class RRDModelTest(unittest.TestCase):
+class BaseRRDModelTest(unittest.TestCase):
+
+    """No tests here, just a fixture for mocking out rrdtool etc."""
 
     def setUp(self):
         with mock.patch('rrdmodel.RRDModel.create') as mock_create:
@@ -21,6 +23,10 @@ class RRDModelTest(unittest.TestCase):
 
     def tearDown(self):
         self.patcher.stop()
+
+class RRDModelTest(BaseRRDModelTest):
+
+    """Fairly stupid tests for most RRDModel methods"""
 
     def test_init(self):
         self.mock_create.assert_called_once_with()
@@ -35,9 +41,9 @@ class RRDModelTest(unittest.TestCase):
 
     def test_fetch(self):
         self.mock_rrdtool.fetch.return_value = [
-            (0, 30, 10),
-            ('a', 'b'),
-            [(None, 0), (1, 2), (3, 4)]
+            (0, 30, 10), # time range / resolution
+            ('a', 'b'),  # data source names
+            [(None, 0), (1, 2), (3, 4)] # values
         ]
         self.assertEqual(
             list(self.model.fetch(1, 31, 10)),
@@ -48,52 +54,68 @@ class RRDModelTest(unittest.TestCase):
             ]
         )
 
-    def test_fetch_all(self):
+year = 60*60*24*365
+
+class FetchAllTest(BaseRRDModelTest):
+
+    """Dedicated class for testing RRDModel.fetch_all because it's complicated.
+    What we're most interested in checking are the times at the junction of two
+    resolution levels, that being the tricky part to get right."""
+
+    def setUp(self):
+        super(FetchAllTest, self).setUp()
         def mock_fetch(start, end, res):
+            # Provide dummy values for each consolidation level, but align the
+            # times to the resolution as RRDtool does.
             times = range(start - (start % res), end - (end % res) + 1, res)
             values = [(time, time) for time in times]
             return zip(times, values)
         self.model.fetch = mock_fetch
 
-        def assertIncreasing(times):
-            for i in range(len(times)-1):
-                cur = times[i]
-                nxt = times[i+1]
-                if nxt <= cur:
-                    raise AssertionError(
-                        'Non-increasing elements %d: %d and %d: %d out of %d' %
-                        (i, cur, i+1, nxt, len(times)))
+    @staticmethod
+    def assertIncreasing(times):
+        for i in range(len(times)-1):
+            cur = times[i]
+            nxt = times[i+1]
+            if nxt <= cur:
+                raise AssertionError(
+                    'Non-increasing elements %d: %d and %d: %d out of %d' %
+                    (i, cur, i+1, nxt, len(times)))
 
-        # Check the times at the junction of two resolution levels, where the
-        # latest sample is a multiple of the coarser resolution
-        year = 60*60*24*365
+    # When the latest sample's time is a multiple of the next coarser
+    # resolution
+    def test_at_multiple(self):
         self.mock_rrdtool.last.return_value = year
         times = tuple(t for t,_ in self.model.fetch_all())
-        assertIncreasing(times)
+        self.assertIncreasing(times)
         self.assertEqual(times[0], 0)
         self.assertEqual(times[-1], year)
         self.assertEqual(times[-361], year - 60*360)
         self.assertEqual(times[-362], year - 60*360 - 600)
 
-        # And where it's just above one
+    # And when it's just above one
+    def test_above_multiple(self):
         self.mock_rrdtool.last.return_value = year + 1
         times = tuple(t for t,_ in self.model.fetch_all())
-        assertIncreasing(times)
+        self.assertIncreasing(times)
         self.assertEqual(times[0], 0)
         self.assertEqual(times[-1], year)
         self.assertEqual(times[-361], year - 60*360)
         self.assertEqual(times[-362], year - 60*360 - 600)
 
-        # And where it's just below one
+    # And when it's just below one
+    def test_below_multiple(self):
         self.mock_rrdtool.last.return_value = year + 599
         times = tuple(t for t,_ in self.model.fetch_all())
-        assertIncreasing(times)
+        self.assertIncreasing(times)
         self.assertEqual(times[0], 0)
         self.assertEqual(times[-1], year + 540)
         self.assertEqual(times[-361], year - 60*360 + 540)
         self.assertEqual(times[-362], year - 60*360)
 
 class RRATest(unittest.TestCase):
+
+    """Tests for the in-memory RRA data structure"""
 
     def setUp(self):
         self.a = rrdmodel.RRA((1,2,3))
@@ -126,6 +148,8 @@ class RRATest(unittest.TestCase):
         self.assertEqual(repr(self.a), 'RRA([2, 3, 4.0])')
 
 class RRADiffTest(unittest.TestCase):
+
+    """Tests for the RRA differencing iterable"""
 
     def setUp(self):
         self.a = rrdmodel.RRA(5)

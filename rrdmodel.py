@@ -21,9 +21,9 @@ class RRDModel(object):
 
     step = 60
     consolidation = (
-        (1, 60),     # every minute for an hour
-        (10, 144),   # every 10 mins for a day
-        (60, 168),   # every hour for a week
+        (1, 360),    # every minute for 6 hours
+        (10, 432),   # every 10 mins for 3 days
+        (60, 336),   # every hour for 2 weeks
         (1440, 365), # every day for a year
     )
 

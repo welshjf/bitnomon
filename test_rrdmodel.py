@@ -68,30 +68,30 @@ class RRDModelTest(unittest.TestCase):
         # latest sample is a multiple of the coarser resolution
         year = 60*60*24*365
         self.mock_rrdtool.last.return_value = year
-        times = tuple(zip(*self.model.fetch_all()))[0]
+        times = tuple(t for t,_ in self.model.fetch_all())
         assertIncreasing(times)
         self.assertEqual(times[0], 0)
         self.assertEqual(times[-1], year)
-        self.assertEqual(times[-61], year - 3600)
-        self.assertEqual(times[-62], year - 3600 - 600)
+        self.assertEqual(times[-361], year - 60*360)
+        self.assertEqual(times[-362], year - 60*360 - 600)
 
         # And where it's just above one
         self.mock_rrdtool.last.return_value = year + 1
-        times = tuple(zip(*self.model.fetch_all()))[0]
+        times = tuple(t for t,_ in self.model.fetch_all())
         assertIncreasing(times)
         self.assertEqual(times[0], 0)
         self.assertEqual(times[-1], year)
-        self.assertEqual(times[-61], year - 3600)
-        self.assertEqual(times[-62], year - 3600 - 600)
+        self.assertEqual(times[-361], year - 60*360)
+        self.assertEqual(times[-362], year - 60*360 - 600)
 
         # And where it's just below one
         self.mock_rrdtool.last.return_value = year + 599
-        times = tuple(zip(*self.model.fetch_all()))[0]
+        times = tuple(t for t,_ in self.model.fetch_all())
         assertIncreasing(times)
         self.assertEqual(times[0], 0)
         self.assertEqual(times[-1], year + 540)
-        self.assertEqual(times[-61], year - 3600 + 540)
-        self.assertEqual(times[-62], year - 3600)
+        self.assertEqual(times[-361], year - 60*360 + 540)
+        self.assertEqual(times[-362], year - 60*360)
 
 class RRATest(unittest.TestCase):
 

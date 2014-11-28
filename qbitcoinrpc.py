@@ -1,30 +1,6 @@
 # qbitcoinrpc.py
 # Jacob Welsh, April 2014
 # Based loosely on python-bitcoinlib/bitcoin/rpc.py: Copyright 2011 Jeff Garzik
-# Based in turn on python-jsonrpc/jsonrpc/proxy.py. Original copyright:
-##
-## Copyright (c) 2007 Jan-Klaas Kollhof
-##
-## This file is part of jsonrpc.
-##
-## jsonrpc is free software; you can redistribute it and/or modify
-## it under the terms of the GNU Lesser General Public License as published by
-## the Free Software Foundation; either version 2.1 of the License, or
-## (at your option) any later version.
-##
-## This software is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU Lesser General Public License for more details.
-##
-## You should have received a copy of the GNU Lesser General Public License
-## along with this software; if not, write to the Free Software
-## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
-# The above license applies only to the parts of this file that may be
-# considered derived from the originals. Any parts not subject to the above
-# copyrights may be reused under either the above terms OR the same terms as
-# the rest of Bitnomon.
 
 """Asynchronous Bitcoin Core RPC support for Qt"""
 
@@ -40,10 +16,6 @@ class JSONRPCException(Exception):
         super(JSONRPCException, self).__init__('msg: %r  code: %r' %
                 (error['message'], error['code']))
         self.error = error
-
-class QNetworkReplyError(Exception):
-    def __init__(self, error):
-        super(QNetworkReplyError, self).__init__(error.name)
 
 class RPCReply(QtCore.QObject):
 
@@ -84,23 +56,17 @@ class RPCReply(QtCore.QObject):
             raise JSONRPCException(reply['error'])
         self.finished.emit(reply_obj['result'])
 
-class RPCProxy(QtCore.QObject):
+class RPCManager(QtCore.QObject):
 
-    """Bitcoin JSON-RPC proxy based on Qt's asynchronous networking
-
-    To use this, create a proxy object, which will manage connections to
-    the Bitcoin Core node as defined in bitcoin.conf. Invoke any desired
-    method on this object, optionally with keyword arguments. It will send
-    the request over the network and return immediately. See RPCReply for
-    what to do with the return value.
-    """
+    """Bitcoin JSON-RPC request manager, based on Qt's asynchronous
+    networking"""
 
     host = 'localhost'
     port = 8332
     useragent = 'bitnomon/0.1'
 
     def __init__(self, conf={}, parent=None):
-        super(RPCProxy, self).__init__(parent)
+        super(RPCManager, self).__init__(parent)
         if conf.get('testnet','0') == '1':
             self.port = 18332
         if 'rpcport' in conf:
@@ -122,7 +88,9 @@ class RPCProxy(QtCore.QObject):
         self.manager = QtNetwork.QNetworkAccessManager()
         self.rpc_id = 0
 
-    def _call(self, method, *args):
+    def request(self, method, *args):
+        """Invoke a method over the network, optionally with keyword arguments.
+        Returns immediately with an RPCReply."""
         self.rpc_id += 1
         request = QtNetwork.QNetworkRequest(self.url)
         request.setRawHeader('User-Agent', self.useragent)
@@ -135,16 +103,3 @@ class RPCProxy(QtCore.QObject):
             'id': self.rpc_id
             })
         return RPCReply(self.manager.post(request, postdata))
-
-    def __getattr__(self, method):
-        if method.startswith('__') and method.endswith('__'):
-            # Python internal stuff
-            raise AttributeError
-
-        # Create a callable to do the actual call
-        f = lambda *args: self._call(method, *args)
-
-        # Make debuggers show <function qbitcoinrpc.name> rather than <function
-        # qbitcoinrpc.<lambda>>
-        f.__name__ = method
-        return f

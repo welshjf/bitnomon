@@ -71,7 +71,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.byteFormatter = formatting.ByteCountFormatter()
 
-        self.proxy = qbitcoinrpc.RPCProxy(conf)
+        self.rpc = qbitcoinrpc.RPCManager(conf)
         self.busy = False
         self.chainIndex = 0
         self.replies = []
@@ -316,7 +316,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.tr('Stop the monitored Bitcoin node as well as Bitnomon?'),
                 buttons=(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No))
         if ret == QtGui.QMessageBox.Yes:
-            self.replies.append(self.proxy.stop())
+            self.replies.append(self.rpc.request('stop'))
             QtCore.QTimer.singleShot(0, self.close)
 
     def update(self):
@@ -343,7 +343,7 @@ class MainWindow(QtGui.QMainWindow):
         else:
             method, args, slot = commandChain[self.chainIndex]
             boundSlot = slot.__get__(self, type(self))
-            reply = self.proxy._call(method, *args)
+            reply = self.rpc.request(method, *args)
             reply.finished.connect(boundSlot)
             reply.error.connect(self.netError)
             # Reply object must be kept alive until slot is finished

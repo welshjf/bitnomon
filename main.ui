@@ -368,6 +368,8 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="action_ClearTraffic"/>
+    <addaction name="action_ShutDownQuit"/>
     <addaction name="action_Quit"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
@@ -472,6 +474,22 @@
   <action name="action_AboutQt">
    <property name="text">
     <string>About &amp;Qt</string>
+   </property>
+  </action>
+  <action name="action_ClearTraffic">
+   <property name="text">
+    <string>&amp;Clear Traffic Data...</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear the long-term network traffic history</string>
+   </property>
+  </action>
+  <action name="action_ShutDownQuit">
+   <property name="text">
+    <string>&amp;Shut Down Node and Quit...</string>
+   </property>
+   <property name="toolTip">
+    <string>Quit after telling the Bitcoin node to shut down</string>
    </property>
   </action>
  </widget>

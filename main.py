@@ -73,6 +73,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.proxy = qbitcoinrpc.RPCProxy(conf)
         self.busy = False
+        self.chainIndex = 0
+        self.replies = []
         self.missedSamples = 0
         self.isFullScreen = False
         self.timer = QtCore.QTimer(self)
@@ -92,6 +94,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def _setupMenus(self):
         #pylint: disable=attribute-defined-outside-init
+        self.ui.action_ClearTraffic.triggered.connect(self.clearTraffic)
+
+        self.ui.action_ShutDownQuit.triggered.connect(self.shutdown)
+
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'))
         self.ui.action_Quit.setIcon(icon)
 
@@ -292,6 +298,27 @@ class MainWindow(QtGui.QMainWindow):
         self.networkPlot.enableAutoRange(axis=pyqtgraph.ViewBox.YAxis)
         self.memPoolPlot.enableAutoRange(axis=pyqtgraph.ViewBox.YAxis)
 
+    @QtCore.Slot()
+    def clearTraffic(self):
+        ret = QtGui.QMessageBox.question(self, self.tr('Clear Traffic Data'),
+                self.tr('Clear the long-term network traffic history?'),
+                buttons=(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No))
+        if ret == QtGui.QMessageBox.Yes:
+            self.trafRRD.create()
+            self.trafRecv.clear()
+            self.trafSent.clear()
+            self.plotNetTotals()
+
+    @QtCore.Slot()
+    def shutdown(self):
+        ret = QtGui.QMessageBox.question(self,
+                self.tr('Shut Down Node and Quit'),
+                self.tr('Stop the monitored Bitcoin node as well as Bitnomon?'),
+                buttons=(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No))
+        if ret == QtGui.QMessageBox.Yes:
+            self.replies.append(self.proxy.stop())
+            QtCore.QTimer.singleShot(0, self.close)
+
     def update(self):
         if self.busy:
             self.missedSamples += 1
@@ -300,7 +327,6 @@ class MainWindow(QtGui.QMainWindow):
             self.startChain()
 
     def startChain(self):
-        #pylint: disable=attribute-defined-outside-init
         self.chainIndex = 0
         self.replies = []
         # Lock the chain to avoid sending more requests if the previous ones

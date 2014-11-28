@@ -37,7 +37,7 @@ class RRDModel(object):
         data_source_type = 'COUNTER'
         # would prefer start = 0, but the black magic that is rrd_parsetime.c
         # doesn't accept a second count before 1980
-        start = str(86400*365*11)
+        start = str(86400*365*20)
         step = str(self.step)
         heartbeat = step
         min_val = '0'
@@ -152,6 +152,11 @@ class RRA(object):
         self.oldest += 1
         if self.oldest == len(self.data):
             self.oldest = 0
+
+    def clear(self):
+        "Reset all items to None."
+        self.data = [None]*len(self.data)
+        self.oldest = 0
 
     def difference(self, i1, i2):
         "Return self[i1] - self[i2], or None if undefined."

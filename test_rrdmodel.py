@@ -118,7 +118,7 @@ class RRATest(unittest.TestCase):
     """Tests for the in-memory RRA data structure"""
 
     def setUp(self):
-        self.a = rrdmodel.RRA((1,2,3))
+        self.a = rrdmodel.RRA((1, 2, 3))
         self.a.update(4.0)
 
     def test_init_degenerate(self):
@@ -136,7 +136,7 @@ class RRATest(unittest.TestCase):
             self.a[-4]
 
     def test_iter(self):
-        self.assertEqual(tuple(self.a), (2,3,4.0))
+        self.assertEqual(tuple(self.a), (2, 3, 4.0))
 
     def test_len(self):
         self.assertEqual(len(self.a), 3)
@@ -146,6 +146,10 @@ class RRATest(unittest.TestCase):
 
     def test_repr(self):
         self.assertEqual(repr(self.a), 'RRA([2, 3, 4.0])')
+
+    def test_clear(self):
+        self.a.clear()
+        self.assertEqual(tuple(self.a), (None, None, None))
 
 class RRADiffTest(unittest.TestCase):
 

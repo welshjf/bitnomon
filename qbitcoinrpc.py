@@ -1,6 +1,8 @@
 # qbitcoinrpc.py
-# Jacob Welsh, April 2014
+# Jacob Welsh, 2014
 # Based loosely on python-bitcoinlib/bitcoin/rpc.py: Copyright 2011 Jeff Garzik
+
+#pylint: disable=invalid-name
 
 """Asynchronous Bitcoin Core RPC support for Qt"""
 
@@ -9,15 +11,15 @@ import json
 
 from qtwrapper import QtCore, QtNetwork
 
-import bitcoinconf
-
 class JSONRPCException(Exception):
+    "Error returned in JSON-RPC response"
     def __init__(self, error):
         super(JSONRPCException, self).__init__('msg: %r  code: %r' %
                 (error['message'], error['code']))
         self.error = error
 
 class RPCReply(QtCore.QObject):
+    #pylint: disable=too-few-public-methods
 
     """QtNetwork.QNetworkReply wrapper for handling JSON-RPC results
 
@@ -26,7 +28,7 @@ class RPCReply(QtCore.QObject):
     the JSON result, deserialized into a Python object. Also connect the
     "error" signal to be informed of errors (unlike QNetworkReply.finished,
     RPCReply.finished will not be emitted in case of error).
-    
+
     Floating point numbers in the JSON text will be parsed as Decimal.
 
     As with other Qt objects in PySide, do not allow it to go out of scope
@@ -43,17 +45,20 @@ class RPCReply(QtCore.QObject):
         self.networkReply.finished.connect(self._read_reply)
         self.networkReply.error.connect(self._error)
         self._starttime = QtCore.QDateTime.currentMSecsSinceEpoch()
+        self.rtt = 0
 
     def _error(self, err):
+        'Internal slot for handling network error'
         self.networkReply.finished.disconnect()
         self.error.emit(err, self.networkReply.errorString())
 
     def _read_reply(self):
+        'Internal slot for handling network reply; emits "finished"'
         self.rtt = QtCore.QDateTime.currentMSecsSinceEpoch() - self._starttime
         reply_text = bytes(self.networkReply.readAll()).decode('utf8')
         reply_obj = json.loads(reply_text, parse_float=decimal.Decimal)
         if reply_obj['error'] is not None:
-            raise JSONRPCException(reply['error'])
+            raise JSONRPCException(reply_obj['error'])
         self.finished.emit(reply_obj['result'])
 
 class RPCManager(QtCore.QObject):
@@ -65,9 +70,11 @@ class RPCManager(QtCore.QObject):
     port = 8332
     useragent = 'bitnomon/0.1'
 
-    def __init__(self, conf={}, parent=None):
+    def __init__(self, conf=None, parent=None):
         super(RPCManager, self).__init__(parent)
-        if conf.get('testnet','0') == '1':
+        if conf is None:
+            conf = {}
+        if conf.get('testnet', '0') == '1':
             self.port = 18332
         if 'rpcport' in conf:
             self.port = int(conf['rpcport'])
@@ -95,7 +102,8 @@ class RPCManager(QtCore.QObject):
         request = QtNetwork.QNetworkRequest(self.url)
         request.setRawHeader('User-Agent', self.useragent)
         request.setRawHeader('Content-Type', 'application/json')
-        request.setAttribute(QtNetwork.QNetworkRequest.HttpPipeliningAllowedAttribute, True)
+        request.setAttribute(
+                QtNetwork.QNetworkRequest.HttpPipeliningAllowedAttribute, True)
         postdata = json.dumps({
             'version': '1.1',
             'method': method,

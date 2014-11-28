@@ -5,9 +5,10 @@
 import platform
 import os
 
-COIN=100000000
+COIN = 100000000
 
 class ConfigError(Exception):
+    'Error loading Bitcoin config file'
     pass
 
 def default_datadir():

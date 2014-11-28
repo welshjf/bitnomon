@@ -10,8 +10,6 @@ if sys.version_info[0] > 2:
 else:
     import rrdtool
 
-import main
-
 class RRDModel(object):
 
     "Round-robin database model."
@@ -79,7 +77,6 @@ class RRDModel(object):
             start += end
         end -= end % resolution
         start -= start % resolution
-        args = [self.rrd_file, 'AVERAGE', '-s', str(start)]
         time_span, header, values = rrdtool.fetch(self.rrd_file, 'AVERAGE',
                 '-s', str(int(start)),
                 '-e', str(int(end)),

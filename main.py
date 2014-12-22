@@ -75,6 +75,7 @@ class MainWindow(QtGui.QMainWindow):
         self.busy = False
         self.chainIndex = 0
         self.replies = []
+        self.tempReply = None
         self.missedSamples = 0
         self.isFullScreen = False
         self.timer = QtCore.QTimer(self)
@@ -316,8 +317,9 @@ class MainWindow(QtGui.QMainWindow):
                 self.tr('Stop the monitored Bitcoin node as well as Bitnomon?'),
                 buttons=(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No))
         if ret == QtGui.QMessageBox.Yes:
-            self.replies.append(self.rpc.request('stop'))
-            QtCore.QTimer.singleShot(0, self.close)
+            self.tempReply = self.rpc.request('stop')
+            self.tempReply.finished.connect(self.close)
+            self.tempReply.error.connect(self.netError)
 
     def update(self):
         if self.busy:

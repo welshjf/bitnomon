@@ -32,7 +32,7 @@ class RRDModel(object):
 
     def create(self):
         "Create a new RRD file."
-        data_source_type = 'COUNTER'
+        data_source_type = 'DERIVE'
         # would prefer start = 0, but the black magic that is rrd_parsetime.c
         # doesn't accept a second count before 1980
         start = str(86400*365*20)

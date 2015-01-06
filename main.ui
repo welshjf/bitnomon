@@ -414,7 +414,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Bits (SI)</string>
+    <string>Bits, SI (kb)</string>
    </property>
   </action>
   <action name="action_NetUnitByteSI">
@@ -422,7 +422,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Bytes (SI)</string>
+    <string>Bytes, SI (kB)</string>
    </property>
   </action>
   <action name="action_NetUnitByteBinary">
@@ -430,7 +430,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Bytes (Binary)</string>
+    <string>Bytes, Binary (KiB)</string>
    </property>
   </action>
   <action name="action_NetUnits">

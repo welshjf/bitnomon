@@ -87,7 +87,7 @@ class MainWindow(QtGui.QMainWindow):
         self._setupStatusBar()
         self._setupPlots()
         self.resetZoom()
-        self.ui.action_StatusBar.setChecked(DEBUG)
+        self.readSettings()
 
         if DEBUG:
             self.perfProbe = perfprobe.PerfProbe(self)
@@ -200,6 +200,32 @@ class MainWindow(QtGui.QMainWindow):
             pen=None, pxMode=True)
         self.memPoolPlot.addItem(self.memPoolScatterPlot)
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
+
+    def readSettings(self):
+        settings = QtCore.QSettings()
+        settings.beginGroup('MainWindow')
+        if settings.contains('size'):
+            self.resize(settings.value('size').toSize())
+        if settings.contains('pos'):
+            self.move(settings.value('pos').toPoint())
+        if settings.value('fullScreen').toBool():
+            self.ui.action_FullScreen.setChecked(True)
+        self.ui.action_StatusBar.setChecked(
+                settings.value('statusBar').toBool())
+        settings.endGroup()
+
+    def writeSettings(self):
+        settings = QtCore.QSettings()
+        settings.beginGroup('MainWindow')
+        settings.setValue('size', self.size())
+        settings.setValue('pos', self.pos())
+        settings.setValue('fullScreen', self.isFullScreen)
+        settings.setValue('statusBar', self.ui.action_StatusBar.isChecked())
+        # TODO: net units and zoom
+        settings.endGroup()
+
+    def closeEvent(self, _):
+        self.writeSettings()
 
     def about(self):
         about = QtGui.QDialog(self)
@@ -488,11 +514,10 @@ def load_config(argv):
         # CLI overrides config file
         conf['testnet'] = '1'
 
-    # Load Bitnomon configuration
-    QtGui.qApp.setOrganizationName('eemta.org')
-    QtGui.qApp.setOrganizationDomain('eemta.org')
+    # Initialize QSettings identity
+    QtGui.qApp.setOrganizationName('Welsh Computing')
+    QtGui.qApp.setOrganizationDomain('welshcomputing.com')
     QtGui.qApp.setApplicationName('Bitnomon')
-    # QSettings stuff goes here
 
     # QDesktopServices.DataLocation doesn't give the desired result.
     # QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
@@ -508,9 +533,9 @@ def main(argv):
 
     "Main entry point of the program"
 
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
     global qApp #pylint: disable=global-statement
     qApp = QtGui.QApplication(argv)
+    signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
 
     # pyqtgraph's exit crash workaround seems to do more harm than good.
     pyqtgraph.setConfigOption('exitCleanup', False)

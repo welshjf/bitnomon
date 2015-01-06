@@ -233,14 +233,14 @@ class MainWindow(QtGui.QMainWindow):
         about.show()
 
     def netUnitBitSI(self):
-        self.byteFormatter.setUnitBits()
-        self.byteFormatter.setPrefixSI()
+        self.byteFormatter.unit_bits = True
+        self.byteFormatter.prefix_si = True
     def netUnitByteSI(self):
-        self.byteFormatter.setUnitBytes()
-        self.byteFormatter.setPrefixSI()
+        self.byteFormatter.unit_bits = False
+        self.byteFormatter.prefix_si = True
     def netUnitByteBinary(self):
-        self.byteFormatter.setUnitBytes()
-        self.byteFormatter.setPrefixBinary()
+        self.byteFormatter.unit_bits = False
+        self.byteFormatter.prefix_si = False
 
     def plotNetTotals(self):
         # Find boundary between RRD averages and full-resolution data
@@ -403,12 +403,11 @@ class MainWindow(QtGui.QMainWindow):
             if byte_count is None:
                 return '-'
             else:
-                return self.byteFormatter.format(
-                        byte_count/float(seconds)) + '/s'
+                return self.byteFormatter(byte_count/float(seconds)) + '/s'
 
         # Update in-memory RRAs for high-resolution traffic data and averages
         recv = totals['totalbytesrecv']
-        self.ui.lRecvTotal.setText(self.byteFormatter.format(recv))
+        self.ui.lRecvTotal.setText(self.byteFormatter(recv))
         self.trafRecv.update(recv)
         self.ui.lRecv10s.setText(
                 format_speed(self.trafRecv.difference(-1, -6), 10))
@@ -418,7 +417,7 @@ class MainWindow(QtGui.QMainWindow):
                 format_speed(self.trafRecv.difference(-1, -300), 598))
 
         sent = totals['totalbytessent']
-        self.ui.lSentTotal.setText(self.byteFormatter.format(sent))
+        self.ui.lSentTotal.setText(self.byteFormatter(sent))
         self.trafSent.update(sent)
         self.ui.lSent10s.setText(
                 format_speed(self.trafSent.difference(-1, -6), 10))
@@ -477,7 +476,7 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot()
     def updateStatusRSS(self):
         self.statusRSS.setText('RSS: %s' %
-            self.byteFormatter.format(self.perfProbe.rss))
+            self.byteFormatter(self.perfProbe.rss))
 
 def load_config(argv):
 

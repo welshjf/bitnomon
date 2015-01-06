@@ -3,7 +3,8 @@
 
 """Text/number formatting"""
 
-class ByteCountFormatter:
+class ByteCountFormatter(object):
+    #pylint: disable=too-few-public-methods
 
     """Human-readable display of byte counts in various formats.
 
@@ -16,8 +17,8 @@ class ByteCountFormatter:
         prefix_si    True for SI or False for binary prefixes
     """
 
-    SI_prefixes = ('k','M','G','T','P','E','Z','Y')
-    binary_prefixes = ('Ki','Mi','Gi','Ti','Pi','Ei','Zi','Yi')
+    SI_prefixes = ('k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    binary_prefixes = ('Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi')
 
     def __init__(self):
         self.unit_bits = False
@@ -43,8 +44,8 @@ class ByteCountFormatter:
         if abs(count) < factor:
             return u'%d %c' % (count, unit)
         size = float(count)
-        prefixIndex = 0
-        while abs(size) >= factor and prefixIndex < len(prefixes):
+        prefix_index = 0
+        while abs(size) >= factor and prefix_index < len(prefixes):
             size /= factor
-            prefixIndex += 1
-        return u'%.2f %s%c' % (size, prefixes[prefixIndex-1], unit)
+            prefix_index += 1
+        return u'%.2f %s%c' % (size, prefixes[prefix_index-1], unit)

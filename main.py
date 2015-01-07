@@ -204,14 +204,25 @@ class MainWindow(QtGui.QMainWindow):
     def readSettings(self):
         settings = QtCore.QSettings()
         settings.beginGroup('MainWindow')
+
         if settings.contains('size'):
             self.resize(settings.value('size').toSize())
+
         if settings.contains('pos'):
             self.move(settings.value('pos').toPoint())
+
         if settings.value('fullScreen').toBool():
-            self.ui.action_FullScreen.setChecked(True)
+            self.ui.action_FullScreen.trigger()
+
         self.ui.action_StatusBar.setChecked(
                 settings.value('statusBar').toBool())
+
+        if settings.value('formatBits').toBool():
+            self.ui.action_NetUnitBitSI.trigger()
+        elif settings.contains('formatSI') and (not
+                settings.value('formatSI').toBool()):
+            self.ui.action_NetUnitByteBinary.trigger()
+
         settings.endGroup()
 
     def writeSettings(self):
@@ -221,7 +232,9 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue('pos', self.pos())
         settings.setValue('fullScreen', self.isFullScreen)
         settings.setValue('statusBar', self.ui.action_StatusBar.isChecked())
-        # TODO: net units and zoom
+        settings.setValue('formatBits', self.byteFormatter.unit_bits)
+        settings.setValue('formatSI', self.byteFormatter.prefix_si)
+        # TODO: zoom
         settings.endGroup()
 
     def closeEvent(self, _):

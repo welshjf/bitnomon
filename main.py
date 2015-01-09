@@ -219,9 +219,11 @@ class MainWindow(QtGui.QMainWindow):
 
         if settings.value('formatBits').toBool():
             self.ui.action_NetUnitBitSI.trigger()
-        elif settings.contains('formatSI') and (not
-                settings.value('formatSI').toBool()):
-            self.ui.action_NetUnitByteBinary.trigger()
+        elif settings.contains('formatSI'):
+            if settings.value('formatSI').toBool():
+                self.ui.action_NetUnitByteSI.trigger()
+            else:
+                self.ui.action_NetUnitByteBinary.trigger()
 
         settings.endGroup()
 

@@ -7,7 +7,7 @@ else
  RCC=pyside-rcc
 endif
 
-generated=ui_main.py ui_about.py bitnomon_rc.py qtwrapper.py
+generated=ui_main.py ui_about.py bitnomon_rc.py qtwrapper.py testing.html
 all: $(generated)
 
 ui_main.py: main.ui
@@ -18,6 +18,9 @@ bitnomon_rc.py: res/bitnomon.qrc
 	$(RCC) res/bitnomon.qrc -o bitnomon_rc.py
 qtwrapper.py: qtwrapper.m4
 	m4 $(M4_OPTS) qtwrapper.m4 > qtwrapper.py
+
+testing.html: testing.html.m4
+	m4 -P $< > $@
 
 clean:
 	rm -f *.pyc $(generated)

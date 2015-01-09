@@ -70,24 +70,23 @@ class MainWindow(QtGui.QMainWindow):
             self.setWindowTitle(self.windowTitle() + ' [testnet]')
 
         self.byteFormatter = formatting.ByteCountFormatter()
+        self.isFullScreen = False
+        self.missedSamples = 0
+        self._setupMenus()
+        self._setupStatusBar()
+        self._setupPlots()
+        self.resetZoom()
+        self.readSettings()
 
         self.rpc = qbitcoinrpc.RPCManager(conf)
         self.busy = False
         self.chainIndex = 0
         self.replies = []
         self.tempReply = None
-        self.missedSamples = 0
-        self.isFullScreen = False
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(2000)
         QtCore.QTimer.singleShot(0, self.update)
-
-        self._setupMenus()
-        self._setupStatusBar()
-        self._setupPlots()
-        self.resetZoom()
-        self.readSettings()
 
         if DEBUG:
             self.perfProbe = perfprobe.PerfProbe(self)

@@ -1,10 +1,10 @@
-ifdef PYQT
+ifdef PYSIDE
+ UIC=pyside-uic
+ RCC=pyside-rcc
+else
  UIC=pyuic4
  RCC=pyrcc4 -py3
  M4_OPTS=-D PYQT
-else
- UIC=pyside-uic
- RCC=pyside-rcc
 endif
 
 generated=ui_main.py ui_about.py bitnomon_rc.py qtwrapper.py testing.html

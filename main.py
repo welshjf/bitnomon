@@ -205,21 +205,21 @@ class MainWindow(QtGui.QMainWindow):
         settings.beginGroup('MainWindow')
 
         if settings.contains('size'):
-            self.resize(settings.value('size').toSize())
+            self.resize(settings.value('size', type=QtCore.QSize))
 
         if settings.contains('pos'):
-            self.move(settings.value('pos').toPoint())
+            self.move(settings.value('pos', type=QtCore.QPoint))
 
-        if settings.value('fullScreen').toBool():
+        if settings.value('fullScreen', type=bool):
             self.ui.action_FullScreen.trigger()
 
         self.ui.action_StatusBar.setChecked(
-                settings.value('statusBar').toBool())
+                settings.value('statusBar', type=bool))
 
-        if settings.value('formatBits').toBool():
+        if settings.value('formatBits', type=bool):
             self.ui.action_NetUnitBitSI.trigger()
         elif settings.contains('formatSI'):
-            if settings.value('formatSI').toBool():
+            if settings.value('formatSI', type=bool):
                 self.ui.action_NetUnitByteSI.trigger()
             else:
                 self.ui.action_NetUnitByteBinary.trigger()

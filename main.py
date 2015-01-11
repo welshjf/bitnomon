@@ -37,6 +37,18 @@ qApp = None
 DEBUG = False
 DATA_DIR = ''
 
+def pgAxisData(viewBox):
+    """Get axis ranges and auto-scale status from a ViewBox, using pyqtgraph
+    internals.
+
+    Returns: (xAuto, xMin, xMax, yAuto, yMin, yMax)
+    """
+    state = viewBox.state
+    xAuto, yAuto = state['autoRange']
+    (xMin, xMax), (yMin, yMax) = state['targetRange']
+    return (bool(xAuto), float(xMin), float(xMax),
+            bool(yAuto), float(yMin), float(yMax))
+
 # API requests are chained sequentially (doesn't seem to work reliably if
 # QNetworkAccessManager parallelizes them).
 commandChain = []
@@ -76,7 +88,11 @@ class MainWindow(QtGui.QMainWindow):
         self._setupStatusBar()
         self._setupPlots()
         self.resetZoom()
-        self.readSettings()
+        try:
+            self.readSettings()
+        except:
+            sys.stderr.write('Failed to read QSettings\n')
+            traceback.print_exc()
 
         self.rpc = qbitcoinrpc.RPCManager(conf)
         self.busy = False
@@ -201,18 +217,17 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
     def readSettings(self):
+        # FIXME: not very pythonic
+
         settings = QtCore.QSettings()
         settings.beginGroup('MainWindow')
 
         if settings.contains('size'):
             self.resize(settings.value('size', type=QtCore.QSize))
-
         if settings.contains('pos'):
             self.move(settings.value('pos', type=QtCore.QPoint))
-
         if settings.value('fullScreen', type=bool):
             self.ui.action_FullScreen.trigger()
-
         self.ui.action_StatusBar.setChecked(
                 settings.value('statusBar', type=bool))
 
@@ -224,18 +239,62 @@ class MainWindow(QtGui.QMainWindow):
             else:
                 self.ui.action_NetUnitByteBinary.trigger()
 
+        if settings.value('netPlotXAuto', False, type=bool):
+            self.networkPlot.enableAutoRange(x=True)
+        elif settings.value('memPlotXAuto', False, type=bool):
+            # FIXME: this doesn't work. Something to do with axis linkage;
+            # autoRange gets reset to False when the window is first shown.
+            self.memPoolPlot.enableAutoRange(x=True)
+        elif (settings.contains('netPlotXMin') and
+                settings.contains('netPlotXMax')):
+            self.networkPlot.setXRange(
+                    settings.value('netPlotXMin', type=float),
+                    settings.value('netPlotXMax', type=float),
+                    padding=0)
+        if not settings.value('netPlotYAuto', True, type=bool):
+            self.networkPlot.setYRange(
+                    settings.value('netPlotYMin', type=float),
+                    settings.value('netPlotYMax', type=float),
+                    padding=0)
+        if not settings.value('memPlotYAuto', True, type=bool):
+            self.memPoolPlot.setYRange(
+                    settings.value('memPlotYMin', type=float),
+                    settings.value('memPlotYMax', type=float),
+                    padding=0)
+
         settings.endGroup()
 
     def writeSettings(self):
         settings = QtCore.QSettings()
         settings.beginGroup('MainWindow')
+
         settings.setValue('size', self.size())
         settings.setValue('pos', self.pos())
         settings.setValue('fullScreen', self.isFullScreen)
         settings.setValue('statusBar', self.ui.action_StatusBar.isChecked())
+
         settings.setValue('formatBits', self.byteFormatter.unit_bits)
         settings.setValue('formatSI', self.byteFormatter.prefix_si)
-        # TODO: zoom
+
+        netXAuto, netXMin, netXMax, netYAuto, netYMin, netYMax = pgAxisData(
+                self.networkPlot.getViewBox())
+        memXAuto, _, _, memYAuto, memYMin, memYMax = pgAxisData(
+                self.memPoolPlot.getViewBox())
+        settings.setValue('netPlotXAuto', netXAuto)
+        settings.setValue('memPlotXAuto', memXAuto)
+        if not netXAuto and not memXAuto:
+            settings.setValue('netPlotXMin', netXMin)
+            settings.setValue('netPlotXMax', netXMax)
+        # Don't need memPoolPlot X range because it's linked to networkPlot
+        settings.setValue('netPlotYAuto', netYAuto)
+        if not netYAuto:
+            settings.setValue('netPlotYMin', netYMin)
+            settings.setValue('netPlotYMax', netYMax)
+        settings.setValue('memPlotYAuto', memYAuto)
+        if not memYAuto:
+            settings.setValue('memPlotYMin', memYMin)
+            settings.setValue('memPlotYMax', memYMax)
+
         settings.endGroup()
 
     def closeEvent(self, _):
@@ -336,8 +395,8 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot()
     def resetZoom(self):
         self.networkPlot.setXRange(0, 10, padding=.02)
-        self.networkPlot.enableAutoRange(axis=pyqtgraph.ViewBox.YAxis)
-        self.memPoolPlot.enableAutoRange(axis=pyqtgraph.ViewBox.YAxis)
+        self.networkPlot.enableAutoRange(y=True)
+        self.memPoolPlot.enableAutoRange(y=True)
 
     @QtCore.Slot()
     def clearTraffic(self):

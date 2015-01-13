@@ -17,7 +17,7 @@ class AboutDialogUi(Ui_aboutDialog):
         output_text = self.label.text().format(
             version=__version__,
             pg_version=pyqtgraph.__version__,
-            pyqt='PySide' if qtwrapper.PYSIDE else 'PyQt',
+            pyqt='PySide' if qtwrapper.IS_PYSIDE else 'PyQt',
             pyqt_version=qtwrapper.__version__,
             qt_version=qtwrapper.QtCore.qVersion(),
             rrd_version=rrdtool.__version__,

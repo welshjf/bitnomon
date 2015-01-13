@@ -10,20 +10,27 @@ import math
 import traceback
 import signal
 
-import qtwrapper
-from qtwrapper import QtCore, QtGui, QtNetwork
+# This must come before pyqtgraph so it doesn't try to guess the binding
+from bitnomon.qtwrapper import (
+    QtCore,
+    QtGui,
+    QtNetwork,
+    IS_PYSIDE,
+)
 import numpy
 import pyqtgraph
 
-from ui_main import Ui_MainWindow
-import about
-import bitcoinconf
-import perfprobe
-import qbitcoinrpc
-import rrdmodel
-import rrdplot
-import formatting
-from age import ageOfTime, AgeAxisItem
+from bitnomon import (
+    ui_main,
+    about,
+    bitcoinconf,
+    perfprobe,
+    qbitcoinrpc,
+    rrdmodel,
+    rrdplot,
+    formatting,
+)
+from bitnomon.age import ageOfTime, AgeAxisItem
 
 if sys.version_info[0] > 2:
     #pylint: disable=redefined-builtin
@@ -75,7 +82,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, conf, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.ui = Ui_MainWindow()
+        self.ui = ui_main.Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.label_logo.hide()
 
@@ -90,6 +97,7 @@ class MainWindow(QtGui.QMainWindow):
         self._setupPlots()
         self.resetZoom()
         try:
+            #pylint: disable=bare-except
             self.readSettings()
         except:
             sys.stderr.write('Failed to read QSettings\n')
@@ -219,7 +227,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def readSettings(self):
 
-        if qtwrapper.PYSIDE:
+        if IS_PYSIDE:
             sys.stderr.write('Warning: restoring state from QSettings not ' +
                     'supported with PySide\n')
             return
@@ -606,7 +614,7 @@ def load_config(argv):
 
     return conf
 
-def main(argv):
+def main(argv=sys.argv[:]):
 
     "Main entry point of the program"
 

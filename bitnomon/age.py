@@ -1,7 +1,7 @@
 """Representation and display of age data"""
 
-# Import our chosen Qt binding first so pyqtgraph doesn't have to guess
-from qtwrapper import QtCore
+# Import our chosen Qt binding first so pyqtgraph doesn't try to guess
+from bitnomon.qtwrapper import QtCore
 import pyqtgraph
 from math import ceil, log
 

@@ -22,4 +22,6 @@ setup(
             'bitnomon=bitnomon.main:main',
         ],
     },
+    test_suite='tests',
+    test_loader='run_unit_tests:Loader',
 )

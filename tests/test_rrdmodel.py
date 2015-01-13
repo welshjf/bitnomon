@@ -6,19 +6,19 @@ if sys.version_info < (3,3):
 else:
     from unittest import mock
 
-import rrdmodel
+from bitnomon import rrdmodel
 
 class BaseRRDModelTest(unittest.TestCase):
 
     """No tests here, just a fixture for mocking out rrdtool etc."""
 
     def setUp(self):
-        with mock.patch('rrdmodel.RRDModel.create') as mock_create:
+        with mock.patch('bitnomon.rrdmodel.RRDModel.create') as mock_create:
             self.mock_create = mock_create
-            with mock.patch('rrdmodel.os.path.exists') as mock_path_exists:
-                mock_path_exists.return_value = False
+            with mock.patch('bitnomon.rrdmodel.os.path.exists') as mock_exists:
+                mock_exists.return_value = False
                 self.model = rrdmodel.RRDModel('test_data_dir')
-        self.patcher = mock.patch('rrdmodel.rrdtool')
+        self.patcher = mock.patch('bitnomon.rrdmodel.rrdtool')
         self.mock_rrdtool = self.patcher.start()
 
     def tearDown(self):

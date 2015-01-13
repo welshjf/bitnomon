@@ -1,5 +1,5 @@
 import unittest
-import age
+from bitnomon import age
 
 class StaticTest(unittest.TestCase):
 

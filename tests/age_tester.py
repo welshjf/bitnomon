@@ -1,4 +1,4 @@
-import age
+from bitnomon import age
 import pyqtgraph as pg
 
 app = pg.QtGui.QApplication([])

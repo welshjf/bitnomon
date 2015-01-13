@@ -1,5 +1,5 @@
 import unittest
-import formatting
+from bitnomon import formatting
 
 class ByteCountFormatterTest(unittest.TestCase):
 

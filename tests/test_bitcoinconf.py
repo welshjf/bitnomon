@@ -12,13 +12,13 @@ if sys.version_info < (3,):
 else:
     from io import StringIO
 
-import bitcoinconf
+from bitnomon import bitcoinconf
 
 class ModuleTest(unittest.TestCase):
 
     "Tests for top-level module components (non-class functions)"
 
-    @mock.patch('bitcoinconf.platform.system')
+    @mock.patch('bitnomon.bitcoinconf.platform.system')
     def test_default_datadir(self, mock_system):
 
         def test_for_system(system, environ):
@@ -37,7 +37,7 @@ class ModuleTest(unittest.TestCase):
 
 class ConfTest(unittest.TestCase):
 
-    @mock.patch('bitcoinconf.open', create=True)
+    @mock.patch('bitnomon.bitcoinconf.open', create=True)
     def test_load(self, m):
         m.return_value = StringIO('\n'.join((
             '# comment',

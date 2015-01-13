@@ -1,5 +1,4 @@
-ifdef(`PYQT',
-`import sip
+import sip
 sip.setapi("QDate", 2)
 sip.setapi("QDateTime", 2)
 sip.setapi("QString", 2)
@@ -9,5 +8,6 @@ sip.setapi("QUrl", 2)
 sip.setapi("QVariant", 2)
 from PyQt4 import QtCore, QtGui, QtNetwork
 QtCore.Signal = QtCore.pyqtSignal
-QtCore.Slot = QtCore.pyqtSlot',
-`from PySide import QtCore, QtGui, QtNetwork')
+QtCore.Slot = QtCore.pyqtSlot
+PYSIDE = False
+__version__ = QtCore.PYQT_VERSION_STR

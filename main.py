@@ -10,6 +10,7 @@ import math
 import traceback
 import signal
 
+import qtwrapper
 from qtwrapper import QtCore, QtGui, QtNetwork
 import numpy
 import pyqtgraph
@@ -218,6 +219,12 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
     def readSettings(self):
+
+        if qtwrapper.PYSIDE:
+            sys.stderr.write('Warning: restoring state from QSettings not ' +
+                    'supported with PySide\n')
+            return
+
         # FIXME: not very pythonic
 
         settings = QtCore.QSettings()

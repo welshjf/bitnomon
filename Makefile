@@ -1,11 +1,11 @@
 ifdef PYSIDE
  UIC=pyside-uic
  RCC=pyside-rcc
- QTWRAPPER_SRC=qtwrapper-pyside.py
+ QTWRAPPER_SRC=qtwrapper-pyside.in
 else
  UIC=pyuic4
  RCC=pyrcc4 -py3
- QTWRAPPER_SRC=qtwrapper-pyqt.py
+ QTWRAPPER_SRC=qtwrapper-pyqt.in
 endif
 
 generated=bitnomon/ui_main.py \

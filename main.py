@@ -128,8 +128,7 @@ class MainWindow(QtGui.QMainWindow):
 
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'))
         self.ui.action_About.setIcon(icon)
-        self.ui.action_About.triggered.connect(
-                lambda: about.AboutDialog(self).show())
+        self.ui.action_About.triggered.connect(self.about)
 
         icon = QtGui.QIcon(':/trolltech/qmessagebox/images/qtlogo-64.png')
         self.ui.action_AboutQt.setIcon(icon)
@@ -307,6 +306,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeEvent(self, _):
         self.writeSettings()
+
+    def about(self):
+        about.AboutDialog(self).show()
 
     def netUnitBitSI(self):
         self.byteFormatter.unit_bits = True

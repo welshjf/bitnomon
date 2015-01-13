@@ -15,7 +15,7 @@ import numpy
 import pyqtgraph
 
 from ui_main import Ui_MainWindow
-from ui_about import Ui_aboutDialog
+import about
 import bitcoinconf
 import perfprobe
 import qbitcoinrpc
@@ -127,7 +127,8 @@ class MainWindow(QtGui.QMainWindow):
 
         icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'))
         self.ui.action_About.setIcon(icon)
-        self.ui.action_About.triggered.connect(self.about)
+        self.ui.action_About.triggered.connect(
+                lambda: about.AboutDialog(self).show())
 
         icon = QtGui.QIcon(':/trolltech/qmessagebox/images/qtlogo-64.png')
         self.ui.action_AboutQt.setIcon(icon)
@@ -299,11 +300,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeEvent(self, _):
         self.writeSettings()
-
-    def about(self):
-        about = QtGui.QDialog(self)
-        Ui_aboutDialog().setupUi(about)
-        about.show()
 
     def netUnitBitSI(self):
         self.byteFormatter.unit_bits = True

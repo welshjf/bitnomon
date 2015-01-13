@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>416</width>
-    <height>181</height>
+    <width>387</width>
+    <height>273</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,10 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/icons/bitnomon64.png&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap resource="res/bitnomon.qrc">:/icons/bitnomon64.png</pixmap>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -44,7 +47,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Monitor a Bitcoin Core node through its JSON-RPC interface.&lt;/p&gt;&lt;p&gt;Version: 0.1&lt;/p&gt;&lt;p&gt;By Jacob Welsh, 2014&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Visually monitor a Bitcoin Core node.&lt;/p&gt;&lt;p&gt;By Jacob Welsh, 2014-2015&lt;/p&gt;&lt;p&gt;Version: {version}&lt;/p&gt;&lt;p&gt;Using libraries:&lt;br/&gt;PyQtGraph: {pg_version}&lt;br/&gt;{pyqt}: {pyqt_version}&lt;br/&gt;Qt: {qt_version}&lt;br/&gt;RRDtool: {rrd_version}&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -56,7 +59,7 @@
         <bool>true</bool>
        </property>
        <property name="textInteractionFlags">
-        <set>Qt::NoTextInteraction</set>
+        <set>Qt::TextBrowserInteraction</set>
        </property>
       </widget>
      </item>

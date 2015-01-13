@@ -8,24 +8,24 @@ else
  QTWRAPPER_SRC=qtwrapper-pyqt.py
 endif
 
-generated=ui_main.py \
-	  ui_about.py \
-	  bitnomon_rc.py \
-	  qtwrapper.py \
+generated=bitnomon/ui_main.py \
+	  bitnomon/ui_about.py \
+	  bitnomon/bitnomon_rc.py \
+	  bitnomon/qtwrapper.py \
 
 all: $(generated)
 
-ui_%.py: %.ui
+bitnomon/ui_%.py: bitnomon/res/%.ui
 	$(UIC) $< -o $@
 
-%_rc.py: res/%.qrc
+bitnomon/%_rc.py: bitnomon/res/%.qrc
 	$(RCC) $< -o $@
 
-qtwrapper.py: $(QTWRAPPER_SRC)
+bitnomon/qtwrapper.py: bitnomon/$(QTWRAPPER_SRC)
 	cp $< $@
 
 testing.html: testing.html.m4
 	m4 -P $< > $@
 
 clean:
-	rm -f *.pyc $(generated)
+	rm -f bitnomon/*.pyc bitnomon/__pycache__ $(generated)

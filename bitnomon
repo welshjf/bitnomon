@@ -1,4 +1,0 @@
-#!/usr/bin/python3
-import sys
-import main
-sys.exit(main.main(sys.argv))

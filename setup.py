@@ -1,8 +1,9 @@
 from setuptools import setup
+from bitnomon import __version__
 
 setup(
     name='bitnomon',
-    version='0.1',
+    version=__version__,
     description='Bitcoin Node Monitor',
     long_description='[placeholder]',
     author='Jacob Welsh',

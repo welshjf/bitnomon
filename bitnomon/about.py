@@ -1,11 +1,10 @@
 """Help -> About dialog"""
 
-import qtwrapper
+from bitnomon import qtwrapper, __version__
 import pyqtgraph
 import rrdtool
 
-from ui_about import Ui_aboutDialog
-__version__ = '0.1'
+from bitnomon.ui_about import Ui_aboutDialog
 
 class AboutDialogUi(Ui_aboutDialog):
 

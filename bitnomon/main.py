@@ -1,6 +1,3 @@
-#pylint: disable=invalid-name, star-args, no-member
-# no-member gives too much trouble with numpy and pyqtgraph idioms.
-
 """Main window and program entry point"""
 
 import sys
@@ -33,7 +30,7 @@ from bitnomon import (
 from bitnomon.age import ageOfTime, AgeAxisItem
 
 if sys.version_info[0] > 2:
-    #pylint: disable=redefined-builtin
+    #pylint: disable=redefined-builtin,invalid-name
     unicode = str
     xrange = range
 
@@ -96,12 +93,16 @@ class MainWindow(QtGui.QMainWindow):
         self._setupStatusBar()
         self._setupPlots()
         self.resetZoom()
-        try:
-            #pylint: disable=bare-except
-            self.readSettings()
-        except:
-            sys.stderr.write('Failed to read QSettings\n')
-            traceback.print_exc()
+        if IS_PYSIDE:
+            sys.stderr.write('Warning: restoring state from QSettings not ' +
+                    'supported with PySide\n')
+        else:
+            try:
+                #pylint: disable=bare-except
+                self.readSettings()
+            except:
+                sys.stderr.write('Failed to read QSettings\n')
+                traceback.print_exc()
 
         self.rpc = qbitcoinrpc.RPCManager(conf)
         self.busy = False
@@ -226,11 +227,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
     def readSettings(self):
-
-        if IS_PYSIDE:
-            sys.stderr.write('Warning: restoring state from QSettings not ' +
-                    'supported with PySide\n')
-            return
 
         # FIXME: not very pythonic
 
@@ -618,7 +614,7 @@ def main(argv=sys.argv[:]):
 
     "Main entry point of the program"
 
-    global qApp #pylint: disable=global-statement
+    global qApp
     qApp = QtGui.QApplication(argv)
     signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
 

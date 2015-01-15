@@ -1,5 +1,25 @@
 from setuptools import setup
+from setuptools.command.sdist import sdist as _sdist
+from distutils import log
+import subprocess
 from bitnomon import __version__
+
+class sdist(_sdist):
+
+    """Extend the "sdist" command to ensure the generated .py files are
+    included in the source distribution. This avoids having pyuic4/pyrcc4/make
+    as user-facing build requirements.
+
+    To configure for PySide instead of PyQt, first run "make PYSIDE=1"; then
+    the "make" here will have nothing to do."""
+
+    def run(self):
+        log.info("running 'make'")
+        try:
+            subprocess.check_call('make')
+        except subprocess.CalledProcessError as e:
+            raise SystemExit(e)
+        _sdist.run(self)
 
 setup(
     name='bitnomon',
@@ -29,4 +49,5 @@ setup(
     },
     test_suite='tests',
     test_loader='run_unit_tests:Loader',
+    cmdclass={'sdist': sdist},
 )

@@ -12,8 +12,12 @@ setup(
     classifiers=[],
     packages=['bitnomon'],
     requires=[
-        'pyqtgraph',
-        'rrdtool',
+        # 0.9.8 is too old; 0.9.9/10 shipped with a drawing bug that affects us
+        # (https://github.com/pyqtgraph/pyqtgraph/pull/136)
+        'pyqtgraph (>0.9.10)',
+        # The binding distributed with rrdtool itself is version 1.x; we want
+        # the newer one from PyPI which supports Python 3.
+        'rrdtool (>=0.1.0, <1.0.0)',
     ],
     package_data={
         'bitnomon': [],

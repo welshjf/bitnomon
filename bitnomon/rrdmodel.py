@@ -1,4 +1,3 @@
-import sys
 import os
 import time
 import decimal
@@ -56,7 +55,7 @@ class RRDModel(object):
         else:
             time_str = str(decimal.Decimal(t) / 1000)
         rrdtool.update(self.rrd_file,
-                ':'.join((time_str,) + tuple(map(str, vals))))
+                ':'.join([time_str] + [str(v) for v in vals]))
 
     def fetch(self, start, end=None, resolution=1):
         """Fetch data from the RRD.
@@ -72,7 +71,7 @@ class RRDModel(object):
             start += end
         end -= end % resolution
         start -= start % resolution
-        time_span, header, values = rrdtool.fetch(self.rrd_file, 'AVERAGE',
+        time_span, _, values = rrdtool.fetch(self.rrd_file, 'AVERAGE',
                 '-s', str(int(start)),
                 '-e', str(int(end)),
                 '-r', str(resolution))
@@ -167,6 +166,7 @@ class RRA(object):
         return RRADiffSequence(self, undef_val)
 
 class RRADiffSequence(object):
+    #pylint: disable=too-few-public-methods
 
     """Iterable for RRA item differences.
 

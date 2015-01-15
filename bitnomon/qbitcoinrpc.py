@@ -9,7 +9,7 @@
 import decimal
 import json
 
-from qtwrapper import QtCore, QtNetwork
+from bitnomon.qtwrapper import QtCore, QtNetwork
 
 class JSONRPCException(Exception):
     "Error returned in JSON-RPC response"

@@ -1,3 +1,4 @@
+#pylint: disable=unused-import
 import sip
 sip.setapi("QDate", 2)
 sip.setapi("QDateTime", 2)

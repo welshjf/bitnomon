@@ -44,6 +44,7 @@ DEBUG = False
 DATA_DIR = ''
 
 def printException():
+    "Print a stack trace, or just the exception, depending on debug setting"
     if DEBUG:
         traceback.print_exc()
     else:

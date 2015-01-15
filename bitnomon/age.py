@@ -1,7 +1,7 @@
 """Representation and display of age data"""
 
 # Import our chosen Qt binding first so pyqtgraph doesn't try to guess
-from bitnomon.qtwrapper import QtCore
+from bitnomon.qtwrapper import QtCore #pylint: disable=unused-import
 import pyqtgraph
 from math import ceil, log
 
@@ -26,6 +26,7 @@ def genericTickSpacing(idealUnitsPerTick):
         return (powerOfTen/5, powerOfTen/10)
 
 class AgeAxisItem(pyqtgraph.AxisItem):
+    #pylint: disable=too-many-ancestors, too-many-public-methods
 
     def __init__(self, *args, **kwargs):
         super(AgeAxisItem, self).__init__(*args, **kwargs)
@@ -53,7 +54,7 @@ class AgeAxisItem(pyqtgraph.AxisItem):
 
     @staticmethod
     def tickStrings(values, scale, spacing):
-        minutePrecision = max(0, int(ceil(-log(spacing,10))))
+        minutePrecision = max(0, int(ceil(-log(spacing, 10))))
         def formatValue(v):
             if v < 0:
                 return '-' + formatValue(-v)
@@ -68,4 +69,4 @@ class AgeAxisItem(pyqtgraph.AxisItem):
             else:
                 return '%d:%02d:%02.*f' % (days, hours,
                         minutePrecision, minutes)
-        return list(map(formatValue, values))
+        return [formatValue(v) for v in values]

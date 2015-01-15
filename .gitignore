@@ -1,5 +1,8 @@
+/bitnomon.egg-info
+/build
+/dist
+/testing.html
 *.pyc
 ui_*.py
 *_rc.py
 qtwrapper.py
-testing.html

@@ -3,7 +3,7 @@ ifdef PYSIDE
  RCC=pyside-rcc
  QTWRAPPER_SRC=qtwrapper-pyside.in
 else
- UIC=pyuic4
+ UIC=pyuic4 --from-imports
  RCC=pyrcc4 -py3
  QTWRAPPER_SRC=qtwrapper-pyqt.in
 endif
@@ -29,6 +29,8 @@ testing.html: testing.html.m4
 
 clean:
 	rm -vf $(generated)
+
+cleaner:
 	find . -name '*.pyc' -exec rm -vf {} +
 	find . -type d -name __pycache__ -exec rmdir -v {} +
 	rm -rvf bitnomon.egg-info build

@@ -3,12 +3,7 @@ import os
 import time
 import decimal
 
-if sys.version_info[0] > 2:
-    # Allow unit tests to work on Python 3 even though the rrdtool binding
-    # doesn't yet.
-    rrdtool = None
-else:
-    import rrdtool
+import rrdtool
 
 class RRDModel(object):
 

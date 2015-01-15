@@ -24,9 +24,6 @@ bitnomon/%_rc.py: bitnomon/res/%.qrc
 bitnomon/qtwrapper.py: bitnomon/$(QTWRAPPER_SRC)
 	cp $< $@
 
-testing.html: testing.html.m4
-	m4 -P $< > $@
-
 clean:
 	rm -vf $(generated)
 

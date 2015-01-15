@@ -1,8 +1,7 @@
 /bitnomon.egg-info
 /build
 /dist
-/testing.html
 *.pyc
-ui_*.py
-*_rc.py
-qtwrapper.py
+/bitnomon/ui_*.py
+/bitnomon/*_rc.py
+/bitnomon/qtwrapper.py

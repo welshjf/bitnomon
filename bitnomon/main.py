@@ -24,7 +24,6 @@ from bitnomon import (
     perfprobe,
     qbitcoinrpc,
     rrdmodel,
-    rrdplot,
     formatting,
 )
 from bitnomon.age import ageOfTime, AgeAxisItem
@@ -200,9 +199,9 @@ class MainWindow(QtGui.QMainWindow):
                 )
         self.networkPlot.showGrid(y=True)
         self.networkPlot.hideAxis('bottom')
-        self.trafSentPlot = rrdplot.RRDPlotItem(numpy.zeros(traf_intervals),
+        self.trafSentPlot = pyqtgraph.PlotDataItem(numpy.zeros(traf_intervals),
                 pen=(255, 0, 0), fillLevel=0, brush=(255, 0, 0, 100))
-        self.trafRecvPlot = rrdplot.RRDPlotItem(numpy.zeros(traf_intervals),
+        self.trafRecvPlot = pyqtgraph.PlotDataItem(numpy.zeros(traf_intervals),
                 pen=(0, 255, 0), fillLevel=0, brush=(0, 255, 0, 100))
         self.networkPlot.addItem(self.trafSentPlot)
         self.networkPlot.addItem(self.trafRecvPlot)

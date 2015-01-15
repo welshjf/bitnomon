@@ -1,3 +1,5 @@
+#pylint: disable=bare-except
+
 """Main window and program entry point"""
 
 import sys
@@ -41,6 +43,12 @@ qApp = None
 DEBUG = False
 DATA_DIR = ''
 
+def printException():
+    if DEBUG:
+        traceback.print_exc()
+    else:
+        sys.stderr.write(str(sys.exc_info()[1]) + '\n')
+
 def pgAxisData(viewBox):
     """Get axis ranges and auto-scale status from a ViewBox, using pyqtgraph
     internals.
@@ -60,13 +68,13 @@ def chainRequest(method, *args):
     """Decorator to register an API request in the chain. Parameters are the
     API method name and optional arguments. The decorated function is the slot
     that handles the reply."""
-    #pylint: disable=bare-except,missing-docstring
+    #pylint: disable=missing-docstring
     def decorator(responseHandler):
         def handlerWrapper(self, data):
             try:
                 responseHandler(self, data)
             except:
-                traceback.print_exc()
+                printException()
             self.nextChainedRequest()
         commandChain.append((method, args, handlerWrapper))
         return handlerWrapper
@@ -97,11 +105,9 @@ class MainWindow(QtGui.QMainWindow):
                     'supported with PySide\n')
         else:
             try:
-                #pylint: disable=bare-except
                 self.readSettings()
             except:
-                sys.stderr.write('Failed to read QSettings\n')
-                traceback.print_exc()
+                printException()
 
         self.rpc = qbitcoinrpc.RPCManager(conf)
         self.busy = False
@@ -515,7 +521,10 @@ class MainWindow(QtGui.QMainWindow):
 
     @chainRequest('getrawmempool', True)
     def updateMemPool(self, pool):
-        self.plotNetTotals()
+        try:
+            self.plotNetTotals()
+        except:
+            printException()
         now = time.time()
         transactions = pool.values()
         minFreePriority = bitcoinconf.COIN * 144 // 250
@@ -547,7 +556,10 @@ class MainWindow(QtGui.QMainWindow):
         if DEBUG:
             sys.stderr.write(err_str + '\n')
         self.statusNetwork.setText(err_str)
-        self.plotNetTotals()
+        try:
+            self.plotNetTotals()
+        except:
+            printException()
 
     @QtCore.Slot()
     def updateStatusMissedSamples(self):
@@ -623,12 +635,11 @@ def main(argv=sys.argv[:]):
     conf = load_config(argv)
 
     try:
-        #pylint: disable=bare-except
         mainWin = MainWindow(conf)
         mainWin.show()
         return QtGui.qApp.exec_()
     except:
         # PyQt4 segfaults if there's an uncaught exception after
         # Ui_MainWindow.setupUi.
-        traceback.print_exc()
+        printException()
         return 1

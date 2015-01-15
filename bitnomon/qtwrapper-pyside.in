@@ -1,3 +1,8 @@
 #pylint: disable=unused-import
 from PySide import QtCore, QtGui, QtNetwork, __version__
 IS_PYSIDE = True
+
+# pyqtgraph's exit crash workaround seems to do more harm than good; make sure
+# it's always diabled.
+import pyqtgraph
+pyqtgraph.setConfigOption('exitCleanup', False)

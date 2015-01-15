@@ -12,3 +12,8 @@ QtCore.Signal = QtCore.pyqtSignal
 QtCore.Slot = QtCore.pyqtSlot
 IS_PYSIDE = False
 __version__ = QtCore.PYQT_VERSION_STR
+
+# pyqtgraph's exit crash workaround seems to do more harm than good; make sure
+# it's always diabled.
+import pyqtgraph
+pyqtgraph.setConfigOption('exitCleanup', False)

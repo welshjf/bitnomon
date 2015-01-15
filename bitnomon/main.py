@@ -630,9 +630,6 @@ def main(argv=sys.argv[:]):
     qApp = QtGui.QApplication(argv)
     signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
 
-    # pyqtgraph's exit crash workaround seems to do more harm than good.
-    pyqtgraph.setConfigOption('exitCleanup', False)
-
     conf = load_config(argv)
 
     try:

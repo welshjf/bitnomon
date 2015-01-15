@@ -21,15 +21,31 @@ class sdist(_sdist):
             raise SystemExit(e)
         _sdist.run(self)
 
+with open('README.rst') as f:
+    readme_text = f.read()
+
 setup(
     name='bitnomon',
     version=__version__,
     description='Bitcoin Node Monitor',
-    long_description='[placeholder]',
+    long_description=readme_text,
     author='Jacob Welsh',
     author_email='jacob@welshcomputing.com',
+    url='https://www.welshcomputing.com/code/bitnomon.html',
     license='MIT',
-    classifiers=[],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: X11 Applications :: Qt',
+        'License :: OSI Approved :: MIT License',
+        'Natural Language :: English',
+        'Operating System :: POSIX',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Topic :: Scientific/Engineering :: Visualization',
+        'Topic :: System :: Monitoring',
+    ],
     packages=['bitnomon'],
     requires=[
         # 0.9.8 is too old; 0.9.9/10 shipped with a drawing bug that affects us

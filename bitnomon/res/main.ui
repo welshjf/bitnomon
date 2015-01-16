@@ -14,7 +14,7 @@
    <string>Bitnomon</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="res/bitnomon.qrc">
+   <iconset resource="bitnomon.qrc">
     <normaloff>:/icons/bitnomon128.png</normaloff>:/icons/bitnomon128.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -501,7 +501,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="res/bitnomon.qrc"/>
+  <include location="bitnomon.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>387</width>
-    <height>273</height>
+    <width>392</width>
+    <height>305</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="res/bitnomon.qrc">:/icons/bitnomon64.png</pixmap>
+        <pixmap resource="bitnomon.qrc">:/icons/bitnomon64.png</pixmap>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -47,7 +47,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Visually monitor a Bitcoin Core node.&lt;/p&gt;&lt;p&gt;By Jacob Welsh, 2014-2015&lt;/p&gt;&lt;p&gt;Version: {version}&lt;/p&gt;&lt;p&gt;Using libraries:&lt;br/&gt;PyQtGraph: {pg_version}&lt;br/&gt;{pyqt}: {pyqt_version}&lt;br/&gt;Qt: {qt_version}&lt;br/&gt;RRDtool: {rrd_version}&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Visually monitor a Bitcoin Core node.&lt;/p&gt;&lt;p&gt;By Jacob Welsh, 2014-2015&lt;/p&gt;&lt;p&gt;Version: {version}&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;{home_url}&quot;&gt;Home page&lt;/a&gt;&lt;/p&gt;&lt;p&gt;Using libraries:&lt;br/&gt;PyQtGraph: {pg_version}&lt;br/&gt;{pyqt}: {pyqt_version}&lt;br/&gt;Qt: {qt_version}&lt;br/&gt;RRDtool: {rrd_version}&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -56,6 +56,9 @@
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
        </property>
        <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <property name="openExternalLinks">
         <bool>true</bool>
        </property>
        <property name="textInteractionFlags">
@@ -78,7 +81,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="res/bitnomon.qrc"/>
+  <include location="bitnomon.qrc"/>
  </resources>
  <connections>
   <connection>

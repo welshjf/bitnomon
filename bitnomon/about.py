@@ -15,6 +15,7 @@ class AboutDialogUi(Ui_aboutDialog):
         super(AboutDialogUi, self).retranslateUi(aboutDialog)
         output_text = self.label.text().format(
             version=__version__,
+            home_url='https://www.welshcomputing.com/code/bitnomon.html',
             pg_version=pyqtgraph.__version__,
             pyqt='PySide' if qtwrapper.IS_PYSIDE else 'PyQt',
             pyqt_version=qtwrapper.__version__,

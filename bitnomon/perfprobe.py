@@ -1,7 +1,6 @@
 import os
 import sys
-from bitnomon.qtwrapper import QtCore
-import bitnomon.main
+from .qtwrapper import QtCore
 
 class PerfProbe(QtCore.QObject):
 
@@ -21,7 +20,8 @@ class PerfProbe(QtCore.QObject):
         self.probeTimer.start(1000)
         QtCore.QTimer.singleShot(0, self.run)
 
-        if bitnomon.main.DEBUG:
+        from .main import DEBUG
+        if DEBUG:
             self.logTimer = QtCore.QTimer(self)
             self.logTimer.timeout.connect(self.logCSV)
             self.logTimer.start(1000*60)

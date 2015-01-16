@@ -1,7 +1,7 @@
 """Representation and display of age data"""
 
 # Import our chosen Qt binding first so pyqtgraph doesn't try to guess
-import bitnomon.qtwrapper #pylint: disable=unused-import
+from . import qtwrapper #pylint: disable=unused-import
 import pyqtgraph
 from math import ceil, log
 

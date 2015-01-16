@@ -1,5 +1,4 @@
-"""Enable direct package execution (`python ./bitmonon` or `python -m
-bitnomon`)"""
+"""Enable package execution (`python -m bitnomon`)"""
 
-from bitnomon import main
+from . import main
 main.main()

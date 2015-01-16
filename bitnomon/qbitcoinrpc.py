@@ -2,14 +2,12 @@
 # Jacob Welsh, 2014
 # Based loosely on python-bitcoinlib/bitcoin/rpc.py: Copyright 2011 Jeff Garzik
 
-#pylint: disable=invalid-name
-
 """Asynchronous Bitcoin Core RPC support for Qt"""
 
 import decimal
 import json
 
-from bitnomon.qtwrapper import QtCore, QtNetwork
+from .qtwrapper import QtCore, QtNetwork
 
 class JSONRPCException(Exception):
     "Error returned in JSON-RPC response"

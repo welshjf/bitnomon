@@ -10,7 +10,7 @@ import traceback
 import signal
 
 # This must come before pyqtgraph so it doesn't try to guess the binding
-from bitnomon.qtwrapper import (
+from .qtwrapper import (
     QtCore,
     QtGui,
     QtNetwork,
@@ -19,7 +19,7 @@ from bitnomon.qtwrapper import (
 import numpy
 import pyqtgraph
 
-from bitnomon import (
+from . import (
     ui_main,
     about,
     bitcoinconf,
@@ -28,7 +28,7 @@ from bitnomon import (
     rrdmodel,
     formatting,
 )
-from bitnomon.age import ageOfTime, AgeAxisItem
+from .age import ageOfTime, AgeAxisItem
 
 if sys.version_info[0] > 2:
     #pylint: disable=redefined-builtin,invalid-name

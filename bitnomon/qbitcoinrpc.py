@@ -5,16 +5,20 @@
 """Asynchronous Bitcoin Core RPC support for Qt"""
 
 import decimal
+import base64
 import json
 
 from .qtwrapper import QtCore, QtNetwork
+from . import __version__
 
-class JSONRPCException(Exception):
+class JSONRPCError(Exception):
     "Error returned in JSON-RPC response"
+
     def __init__(self, error):
-        super(JSONRPCException, self).__init__('msg: %r  code: %r' %
-                (error['message'], error['code']))
-        self.error = error
+        super(JSONRPCError, self).__init__(error['code'], error['message'])
+
+    def __str__(self):
+        return 'code: {}, message: {}'.format(*self.args)
 
 class RPCReply(QtCore.QObject):
     #pylint: disable=too-few-public-methods
@@ -56,7 +60,7 @@ class RPCReply(QtCore.QObject):
         reply_text = bytes(self.networkReply.readAll()).decode('utf8')
         reply_obj = json.loads(reply_text, parse_float=decimal.Decimal)
         if reply_obj['error'] is not None:
-            raise JSONRPCException(reply_obj['error'])
+            raise JSONRPCError(reply_obj['error'])
         self.finished.emit(reply_obj['result'])
 
 class RPCManager(QtCore.QObject):
@@ -64,32 +68,30 @@ class RPCManager(QtCore.QObject):
     """Bitcoin JSON-RPC request manager, based on Qt's asynchronous
     networking"""
 
-    host = 'localhost'
-    port = 8332
-    useragent = 'bitnomon/0.1'
+    useragent = 'bitnomon/' + __version__
 
     def __init__(self, conf=None, parent=None):
         super(RPCManager, self).__init__(parent)
+
         if conf is None:
             conf = {}
+
         if conf.get('testnet', '0') == '1':
-            self.port = 18332
-        if 'rpcport' in conf:
-            self.port = int(conf['rpcport'])
-        if 'rpcconnect' in conf:
-            self.host = conf['rpcconnect']
+            rpcport = 18332
+        else:
+            rpcport = 8332
 
         # Don't try to format the URL ourselves; QUrl knows how to
         # handle literal IPv6 addresses and whatnot.
         self.url = QtCore.QUrl()
         self.url.setScheme('http')
-        self.url.setHost(self.host)
-        self.url.setPort(self.port)
+        self.url.setHost(conf.get('rpcconnect', 'localhost'))
+        self.url.setPort(int(conf.get('rpcport', rpcport)))
         self.url.setPath('/')
-        if 'rpcuser' in conf:
-            self.url.setUserName(conf['rpcuser'])
-        if 'rpcpassword' in conf:
-            self.url.setPassword(conf['rpcpassword'])
+
+        authpair = conf.get('rpcuser', '') + ':' + conf.get('rpcpassword', '')
+        self.auth = b'Basic ' + base64.b64encode(authpair.encode('utf8'))
+
         self.manager = QtNetwork.QNetworkAccessManager()
         self.rpc_id = 0
 
@@ -99,13 +101,14 @@ class RPCManager(QtCore.QObject):
         self.rpc_id += 1
         request = QtNetwork.QNetworkRequest(self.url)
         request.setRawHeader('User-Agent', self.useragent)
+        request.setRawHeader('Authorization', self.auth)
         request.setRawHeader('Content-Type', 'application/json')
         request.setAttribute(
                 QtNetwork.QNetworkRequest.HttpPipeliningAllowedAttribute, True)
-        postdata = json.dumps({
+        data = json.dumps({
             'version': '1.1',
             'method': method,
             'params': args,
             'id': self.rpc_id
             })
-        return RPCReply(self.manager.post(request, postdata))
+        return RPCReply(self.manager.post(request, data))

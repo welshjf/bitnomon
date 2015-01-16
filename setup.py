@@ -54,6 +54,7 @@ setup(
         # The binding distributed with rrdtool itself is version 1.x; we want
         # the newer one from PyPI which supports Python 3.
         'rrdtool (>=0.1.0, <1.0.0)',
+        'appdirs (>=1.3.0)',
     ],
     package_data={
         'bitnomon': [],

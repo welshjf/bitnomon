@@ -18,6 +18,7 @@ from .qtwrapper import (
 )
 import numpy
 import pyqtgraph
+import appdirs
 
 from . import (
     ui_main,
@@ -607,16 +608,15 @@ def load_config(argv):
         # CLI overrides config file
         conf['testnet'] = '1'
 
-    # Initialize QSettings identity
-    QtGui.qApp.setOrganizationName('Welsh Computing')
-    QtGui.qApp.setOrganizationDomain('welshcomputing.com')
-    QtGui.qApp.setApplicationName('Bitnomon')
-
-    # QDesktopServices.DataLocation doesn't give the desired result.
-    # QStandardPaths.DataLocation in Qt5 does, so mimic that for now.
-    # TODO: support other platforms
+    # Get standard directories...
+    dirs = appdirs.AppDirs('Bitnomon', 'Welsh Computing')
+    # for QSettings
+    qApp.setApplicationName(dirs.appname)
+    qApp.setOrganizationName(dirs.appauthor)
+    qApp.setOrganizationDomain('welshcomputing.com')
+    # for RRD
     global DATA_DIR
-    DATA_DIR = os.path.expanduser('~/.local/share/Bitnomon')
+    DATA_DIR = dirs.user_data_dir
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 

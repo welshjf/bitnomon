@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 """Representation and display of age data"""
 
 # Import our chosen Qt binding first so pyqtgraph doesn't try to guess

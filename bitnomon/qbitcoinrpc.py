@@ -1,6 +1,29 @@
-# qbitcoinrpc.py
-# Jacob Welsh, 2014
-# Based loosely on python-bitcoinlib/bitcoin/rpc.py: Copyright 2011 Jeff Garzik
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+#
+# Based loosely on python-bitcoinlib/bitcoin/rpc.py:
+#  Copyright 2011 Jeff Garzik
+#
+# Previous copyright, from python-jsonrpc/jsonrpc/proxy.py:
+#
+# Copyright (c) 2007 Jan-Klaas Kollhof
+#
+# This file is part of jsonrpc.
+#
+# jsonrpc is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 2.1 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this library; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 """Asynchronous Bitcoin Core RPC support for Qt"""
 

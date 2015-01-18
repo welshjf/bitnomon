@@ -1,4 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
 
 """CLI script and setuptools bridge for running unit tests"""
 

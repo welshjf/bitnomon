@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 #pylint: disable=unused-import
 import sip
 sip.setapi("QDate", 2)

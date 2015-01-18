@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 #pylint: disable=bare-except
 
 """Main window and program entry point"""

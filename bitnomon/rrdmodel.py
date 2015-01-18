@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 import os
 import time
 import decimal

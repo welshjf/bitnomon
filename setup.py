@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 from setuptools import setup, find_packages
 from setuptools.command.sdist import sdist as _sdist
 from distutils import log
@@ -30,8 +34,8 @@ requires=[
     'appdirs (>=1.3.0)',
     'numpy',
     'PyQt4 (>=4.7.0)',
-    # The binding distributed with rrdtool itself is version 1.x; we want
-    # the newer one from PyPI which supports Python 3.
+    # The binding distributed with rrdtool itself is version 1.x. It works, but
+    # for Python 3 support we need the newer one from PyPI.
     'rrdtool (>=0.1.0, <1.0.0)',
 ]
 if BUNDLE:

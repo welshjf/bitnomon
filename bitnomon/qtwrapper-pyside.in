@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 #pylint: disable=unused-import
 from PySide import QtCore, QtGui, QtNetwork, __version__
 IS_PYSIDE = True

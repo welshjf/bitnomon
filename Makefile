@@ -27,7 +27,7 @@ bitnomon/qtwrapper.py: bitnomon/$(QTWRAPPER_SRC)
 clean:
 	rm -vf $(generated)
 
-cleaner:
+cleaner: clean
 	find . -name '*.pyc' -exec rm -vf {} +
 	find . -type d -name __pycache__ -exec rmdir -v {} +
 	rm -rvf bitnomon.egg-info build

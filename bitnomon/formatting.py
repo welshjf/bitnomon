@@ -1,5 +1,6 @@
-# formatting.py
-# Jacob Welsh, April 2014
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
 
 """Text/number formatting"""
 

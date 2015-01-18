@@ -1,6 +1,4 @@
-Bitnomon: Bitcoin node monitor
-
-Copyright (c) 2014 Jacob Welsh <jwelsh@eemta.org>
+Copyright (c) 2015 Jacob Welsh <jacob@welshcomputing.com>
 
 MIT License
 ===========
@@ -22,19 +20,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-PyQt Note
-=========
-
-Bitnomon can use either PySide or PyQt as its Qt binding. PyQt is recommended,
-because there is a memory leak at least as of PySide 1.2.1.
-
-PySide, like Qt itself, is available under the LGPL. PyQt is only available
-under the GPL or a commercial license from Riverbank Computing Limited. If you
-use or distribute Bitnomon with PyQt, you may be subject to the additional
-restrictions of the GPL.
-
-Other
-=====
-
-See also the copyright notes in qbitcoinrpc.py.

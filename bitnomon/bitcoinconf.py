@@ -1,4 +1,6 @@
-# bitcoinconf.py
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
 
 """Bitcoin Core global and user-configurable parameters"""
 

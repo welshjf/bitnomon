@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 """Monitoring GUI for a Bitcoin Core node"""
 
 __version__ = '0.1'

@@ -1,3 +1,7 @@
+# Copyright 2015 Jacob Welsh
+#
+# This file is part of Bitnomon; see the README for license information.
+
 """Help -> About dialog"""
 
 from . import qtwrapper, __version__

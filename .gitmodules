@@ -1,0 +1,3 @@
+[submodule "deps/pyqtgraph"]
+	path = deps/pyqtgraph
+	url = https://github.com/welshjf/pyqtgraph.git

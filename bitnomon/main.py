@@ -21,6 +21,7 @@ from .qtwrapper import (
     IS_PYSIDE,
 )
 QMessageBox = QtGui.QMessageBox
+QIcon = QtGui.QIcon
 import numpy
 import pyqtgraph
 import appdirs
@@ -139,22 +140,22 @@ class MainWindow(QtGui.QMainWindow):
 
         self.ui.action_ShutDownQuit.triggered.connect(self.shutdown)
 
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('application-exit'))
+        icon = QIcon(QIcon.fromTheme('application-exit'))
         self.ui.action_Quit.setIcon(icon)
 
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('view-fullscreen'))
+        icon = QIcon(QIcon.fromTheme('view-fullscreen'))
         self.ui.action_FullScreen.setIcon(icon)
         self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
 
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('zoom-original'))
+        icon = QIcon(QIcon.fromTheme('zoom-original'))
         self.ui.action_ResetZoom.setIcon(icon)
         self.ui.action_ResetZoom.triggered.connect(self.resetZoom)
 
-        icon = QtGui.QIcon(QtGui.QIcon.fromTheme('help-about'))
+        icon = QIcon(QIcon.fromTheme('help-about'))
         self.ui.action_About.setIcon(icon)
         self.ui.action_About.triggered.connect(self.about)
 
-        icon = QtGui.QIcon(':/trolltech/qmessagebox/images/qtlogo-64.png')
+        icon = QIcon(':/trolltech/qmessagebox/images/qtlogo-64.png')
         self.ui.action_AboutQt.setIcon(icon)
         self.ui.action_AboutQt.triggered.connect(QtGui.qApp.aboutQt)
 
@@ -478,10 +479,10 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
     @QtCore.Slot()
     def clearTraffic(self):
-        ret = QtGui.QMessageBox.question(self, self.tr('Clear Traffic Data'),
+        ret = QMessageBox.question(self, self.tr('Clear Traffic Data'),
                 self.tr('Clear the long-term network traffic history?'),
-                buttons=(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No))
-        if ret == QtGui.QMessageBox.Yes:
+                buttons=(QMessageBox.Yes | QMessageBox.No))
+        if ret == QMessageBox.Yes:
             self.trafRRD.create()
             self.trafRecv.clear()
             self.trafSent.clear()
@@ -489,11 +490,11 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
     @QtCore.Slot()
     def shutdown(self):
-        ret = QtGui.QMessageBox.question(self,
+        ret = QMessageBox.question(self,
                 self.tr('Shut Down Node and Quit'),
                 self.tr('Stop the monitored Bitcoin node as well as Bitnomon?'),
-                buttons=(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No))
-        if ret == QtGui.QMessageBox.Yes:
+                buttons=(QMessageBox.Yes | QMessageBox.No))
+        if ret == QMessageBox.Yes:
             self.tempReply = self.rpc.request('stop')
             self.tempReply.finished.connect(self.close)
             self.tempReply.error.connect(self.netError)

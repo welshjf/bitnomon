@@ -18,7 +18,6 @@ from .qtwrapper import (
     QtCore,
     QtGui,
     QtNetwork,
-    IS_PYSIDE,
 )
 QMessageBox = QtGui.QMessageBox
 QIcon = QtGui.QIcon
@@ -36,6 +35,7 @@ from . import (
     formatting,
 )
 from .age import ageOfTime, AgeAxisItem
+from .qsettings import QSettingsGroup, qSettingsProperty
 
 if sys.version_info[0] > 2:
     #pylint: disable=redefined-builtin,invalid-name
@@ -70,6 +70,34 @@ def pgAxisData(viewBox):
     (xMin, xMax), (yMin, yMax) = state['targetRange']
     return (bool(xAuto), float(xMin), float(xMax),
             bool(yAuto), float(yMin), float(yMax))
+
+class MainWindowSettings(QSettingsGroup):
+    #pylint: disable=too-few-public-methods
+
+    """QSettings model for MainWindow"""
+
+    def __init__(self):
+        super(MainWindowSettings, self).__init__('MainWindow')
+
+    size = qSettingsProperty('size')
+    pos = qSettingsProperty('pos')
+    fullScreen = qSettingsProperty('fullScreen', False, valueType=bool)
+    statusBar = qSettingsProperty('statusBar', False, valueType=bool)
+    formatBits = qSettingsProperty('formatBits', False, valueType=bool)
+    formatSI = qSettingsProperty('formatSI', True, valueType=bool)
+
+    netPlotXAuto = qSettingsProperty('netPlotXAuto', False, valueType=bool)
+    netPlotYAuto = qSettingsProperty('netPlotYAuto', True, valueType=bool)
+    netPlotXMin = qSettingsProperty('netPlotXMin', valueType=float)
+    netPlotXMax = qSettingsProperty('netPlotXMax', valueType=float)
+    netPlotYMin = qSettingsProperty('netPlotYMin', valueType=float)
+    netPlotYMax = qSettingsProperty('netPlotYMax', valueType=float)
+
+    memPlotXAuto = qSettingsProperty('memPlotXAuto', False, valueType=bool)
+    memPlotYAuto = qSettingsProperty('memPlotYAuto', True, valueType=bool)
+    # Don't need memPoolPlot X range because it's linked to networkPlot
+    memPlotYMin = qSettingsProperty('memPlotYMin', valueType=float)
+    memPlotYMax = qSettingsProperty('memPlotYMax', valueType=float)
 
 # API requests are chained sequentially (doesn't seem to work reliably if
 # QNetworkAccessManager parallelizes them).
@@ -109,16 +137,12 @@ class MainWindow(QtGui.QMainWindow):
         self._setupStatusBar()
         self._setupPlots()
         self.resetZoom()
-        if IS_PYSIDE:
-            sys.stderr.write('Warning: restoring state from QSettings not ' +
-                    'supported with PySide\n')
-        else:
-            try:
-                self.readSettings()
-            except:
-                # Failing to restore UI state is not important enough to bother
-                # the user.
-                printException()
+        try:
+            self.readSettings()
+        except:
+            # Failing to restore UI state is not important enough to bother the
+            # user.
+            printException()
 
         self.rpc = None
         self.busy = False
@@ -243,86 +267,65 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
     def readSettings(self):
+        with MainWindowSettings() as s:
+            if s.size:
+                self.resize(s.size)
+            if s.pos:
+                self.move(s.pos)
+            self.ui.action_FullScreen.setChecked(s.fullScreen)
+            self.ui.action_StatusBar.setChecked(s.statusBar)
 
-        # FIXME: not very pythonic
-
-        settings = QtCore.QSettings()
-        settings.beginGroup('MainWindow')
-
-        if settings.contains('size'):
-            self.resize(settings.value('size', type=QtCore.QSize))
-        if settings.contains('pos'):
-            self.move(settings.value('pos', type=QtCore.QPoint))
-        if settings.value('fullScreen', type=bool):
-            self.ui.action_FullScreen.trigger()
-        self.ui.action_StatusBar.setChecked(
-                settings.value('statusBar', type=bool))
-
-        if settings.value('formatBits', type=bool):
-            self.ui.action_NetUnitBitSI.trigger()
-        elif settings.contains('formatSI'):
-            if settings.value('formatSI', type=bool):
+            if s.formatBits:
+                self.ui.action_NetUnitBitSI.trigger()
+            elif s.formatSI:
                 self.ui.action_NetUnitByteSI.trigger()
             else:
                 self.ui.action_NetUnitByteBinary.trigger()
 
-        if settings.value('netPlotXAuto', False, type=bool):
-            self.networkPlot.enableAutoRange(x=True)
-        elif settings.value('memPlotXAuto', False, type=bool):
-            # FIXME: this doesn't work. Something to do with axis linkage;
-            # autoRange gets reset to False when the window is first shown.
-            self.memPoolPlot.enableAutoRange(x=True)
-        elif (settings.contains('netPlotXMin') and
-                settings.contains('netPlotXMax')):
-            self.networkPlot.setXRange(
-                    settings.value('netPlotXMin', type=float),
-                    settings.value('netPlotXMax', type=float),
-                    padding=0)
-        if not settings.value('netPlotYAuto', True, type=bool):
-            self.networkPlot.setYRange(
-                    settings.value('netPlotYMin', type=float),
-                    settings.value('netPlotYMax', type=float),
-                    padding=0)
-        if not settings.value('memPlotYAuto', True, type=bool):
-            self.memPoolPlot.setYRange(
-                    settings.value('memPlotYMin', type=float),
-                    settings.value('memPlotYMax', type=float),
-                    padding=0)
+            if s.netPlotXAuto:
+                self.networkPlot.enableAutoRange(x=True)
+            elif s.memPlotXAuto:
+                # FIXME: this doesn't work. Something to do with axis linkage;
+                # autoRange gets reset to False when the window is first shown.
+                self.memPoolPlot.enableAutoRange(x=True)
+            elif None not in (s.netPlotXMin, s.netPlotXMax):
+                self.networkPlot.setXRange(
+                        s.netPlotXMin,
+                        s.netPlotXMax,
+                        padding=0)
 
-        settings.endGroup()
+            if (not s.netPlotYAuto) and (
+                    None not in (s.netPlotYMin, s.netPlotYMax)):
+                self.networkPlot.setYRange(
+                        s.netPlotYMin,
+                        s.netPlotYMax,
+                        padding=0)
+
+            if (not s.memPlotYAuto) and (
+                    None not in (s.memPlotYMin, s.memPlotYMax)):
+                self.memPoolPlot.setYRange(
+                        s.memPlotYMin,
+                        s.memPlotYMax,
+                        padding=0)
 
     def writeSettings(self):
-        settings = QtCore.QSettings()
-        settings.beginGroup('MainWindow')
-
-        settings.setValue('size', self.size())
-        settings.setValue('pos', self.pos())
-        settings.setValue('fullScreen', self.isFullScreen)
-        settings.setValue('statusBar', self.ui.action_StatusBar.isChecked())
-
-        settings.setValue('formatBits', self.byteFormatter.unit_bits)
-        settings.setValue('formatSI', self.byteFormatter.prefix_si)
-
-        netXAuto, netXMin, netXMax, netYAuto, netYMin, netYMax = pgAxisData(
-                self.networkPlot.getViewBox())
-        memXAuto, _, _, memYAuto, memYMin, memYMax = pgAxisData(
-                self.memPoolPlot.getViewBox())
-        settings.setValue('netPlotXAuto', netXAuto)
-        settings.setValue('memPlotXAuto', memXAuto)
-        if not netXAuto and not memXAuto:
-            settings.setValue('netPlotXMin', netXMin)
-            settings.setValue('netPlotXMax', netXMax)
-        # Don't need memPoolPlot X range because it's linked to networkPlot
-        settings.setValue('netPlotYAuto', netYAuto)
-        if not netYAuto:
-            settings.setValue('netPlotYMin', netYMin)
-            settings.setValue('netPlotYMax', netYMax)
-        settings.setValue('memPlotYAuto', memYAuto)
-        if not memYAuto:
-            settings.setValue('memPlotYMin', memYMin)
-            settings.setValue('memPlotYMax', memYMax)
-
-        settings.endGroup()
+        with MainWindowSettings() as s:
+            s.size = self.size()
+            s.pos = self.pos()
+            s.fullScreen = self.isFullScreen
+            s.statusBar = self.ui.action_StatusBar.isChecked()
+            s.formatBits = self.byteFormatter.unit_bits
+            s.formatSI = self.byteFormatter.prefix_si
+            (s.netPlotXAuto,
+             s.netPlotXMin,
+             s.netPlotXMax,
+             s.netPlotYAuto,
+             s.netPlotYMin,
+             s.netPlotYMax) = pgAxisData(self.networkPlot.getViewBox())
+            (s.memPlotXAuto, _, _,
+             s.memPlotYAuto,
+             s.memPlotYMin,
+             s.memPlotYMax) = pgAxisData(self.memPoolPlot.getViewBox())
 
     def loadBitcoinConf(self):
         conf = bitcoinconf.Conf()

@@ -6,11 +6,16 @@
 
 import platform
 import os
+import base64
 
 COIN = 100000000
 
 class ConfigError(Exception):
     'Error loading Bitcoin config file'
+    pass
+
+class FileNotFoundError(IOError):
+    'File not found'
     pass
 
 def default_datadir():
@@ -41,12 +46,36 @@ class Conf(dict):
         """
         if datadir is None:
             datadir = default_datadir()
-        f = open(os.path.join(datadir, filename), 'r')
-        lines = f.readlines()
-        f.close()
-        for line in lines:
-            line = line.split('#', 1)[0]
-            parts = line.split('=', 1)
-            if len(parts) != 2:
-                continue
-            self[parts[0].strip()] = parts[1].strip()
+        try:
+            with open(os.path.join(datadir, filename)) as f:
+                for line in f:
+                    line = line.split('#', 1)[0]
+                    parts = line.split('=', 1)
+                    if len(parts) != 2:
+                        continue
+                    self[parts[0].strip()] = parts[1].strip()
+        except IOError as e:
+            if e.errno == os.errno.ENOENT:
+                raise FileNotFoundError(*e.args)
+            else:
+                raise
+
+    def generate(self, datadir=None, filename='bitcoin.conf'):
+        "Write a suitable config file and load it"
+        if datadir is None:
+            datadir = default_datadir()
+        if not os.path.exists(datadir):
+            os.makedirs(datadir)
+        password = base64.b64encode(os.urandom(16)).decode('ascii').rstrip('=')
+        with open(os.path.join(datadir, filename), 'w') as f:
+            if os.name == 'posix':
+                os.fchmod(f.fileno(), 0o600)
+            # TODO: Windows? Or, is this even necessary? Maybe Bitcoin ensures
+            # non-other-readable permissions on the datadir.
+            f.write((u"""\
+server=1
+rpcuser=local
+rpcpassword=%s
+"""
+            ) % password)
+        self.load(datadir, filename)

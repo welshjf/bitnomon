@@ -1,6 +1,7 @@
 import unittest
 import sys
 import os
+import contextlib
 
 if sys.version_info < (3,3):
     import mock
@@ -38,8 +39,8 @@ class ModuleTest(unittest.TestCase):
 class ConfTest(unittest.TestCase):
 
     @mock.patch('bitnomon.bitcoinconf.open', create=True)
-    def test_load(self, m):
-        m.return_value = StringIO('\n'.join((
+    def test_load(self, mock_open):
+        mock_open.return_value = contextlib.closing(StringIO('\n'.join((
             '# comment',
             '\t # whitespace comment',
             '',
@@ -48,11 +49,11 @@ class ConfTest(unittest.TestCase):
             '  c  =  3  ',
             'd = ',
             '=',
-            '')))
+            ''))))
         conf = bitcoinconf.Conf()
         conf.load('test_datadir')
-        m.assert_called_once_with(os.path.join('test_datadir', 'bitcoin.conf'),
-                'r')
+        mock_open.assert_called_once_with(
+            os.path.join('test_datadir', 'bitcoin.conf'))
         self.assertEqual(conf, {
             'a': '1',
             'b': '2',

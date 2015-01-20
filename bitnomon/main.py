@@ -20,6 +20,7 @@ from .qtwrapper import (
     QtNetwork,
     IS_PYSIDE,
 )
+QMessageBox = QtGui.QMessageBox
 import numpy
 import pyqtgraph
 import appdirs
@@ -43,10 +44,12 @@ if sys.version_info[0] > 2:
 # Must be global to avoid crash at exit
 qApp = None
 
-# Bitnomon global settings (these don't go in bitcoinconf because they're not
-# part of Bitcoin Core)
+# Bitnomon global settings
 DEBUG = False
+TESTNET = False
 DATA_DIR = ''
+BITCOIN_DATA_DIR = None
+BITCOIN_CONF = 'bitcoin.conf'
 
 def printException():
     "Print a stack trace, or just the exception, depending on debug setting"
@@ -90,14 +93,13 @@ class MainWindow(QtGui.QMainWindow):
     #pylint: disable=missing-docstring, too-many-instance-attributes
     #pylint: disable=too-many-public-methods
 
-    def __init__(self, conf, parent=None):
+    def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.ui = ui_main.Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.label_logo.hide()
 
-        if conf.get('testnet', '0') == '1':
-            self.setWindowTitle(self.windowTitle() + ' [testnet]')
+        self.origWindowTitle = self.windowTitle()
 
         self.byteFormatter = formatting.ByteCountFormatter()
         self.isFullScreen = False
@@ -113,17 +115,19 @@ class MainWindow(QtGui.QMainWindow):
             try:
                 self.readSettings()
             except:
+                # Failing to restore UI state is not important enough to bother
+                # the user.
                 printException()
 
-        self.rpc = qbitcoinrpc.RPCManager(conf)
+        self.rpc = None
         self.busy = False
         self.chainIndex = 0
         self.replies = []
         self.tempReply = None
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
-        self.timer.start(2000)
-        QtCore.QTimer.singleShot(0, self.update)
+        self.timer.setInterval(2000)
+        QtCore.QTimer.singleShot(0, self.loadBitcoinConf)
 
         if DEBUG:
             self.perfProbe = perfprobe.PerfProbe(self)
@@ -318,6 +322,60 @@ class MainWindow(QtGui.QMainWindow):
             settings.setValue('memPlotYMax', memYMax)
 
         settings.endGroup()
+
+    def loadBitcoinConf(self):
+        conf = bitcoinconf.Conf()
+        try:
+            conf.load(BITCOIN_DATA_DIR, BITCOIN_CONF)
+        except bitcoinconf.FileNotFoundError:
+            mb = QMessageBox()
+            mb.setText(self.tr(
+                'Bitcoin configuration file not found. Create one?'
+            ))
+            mb.setInformativeText(self.tr("""\
+Bitcoin Core does not accept API connections from external applications by \
+default; a configuration file is required to allow this. Bitnomon can create \
+one to allow connections from the local system, restricted to your user \
+account by a stored random password. You will need to restart your node for \
+this to take effect. As always, if you store funds on this system, it is \
+recommended to set a wallet encryption passphrase and keep backups."""
+            ))
+            mb.setIcon(QMessageBox.Question)
+            mb.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            mb.setDefaultButton(QMessageBox.Yes)
+            ret = mb.exec_()
+            if ret == QMessageBox.Yes:
+                try:
+                    conf.generate(BITCOIN_DATA_DIR, BITCOIN_CONF)
+                except EnvironmentError as e:
+                    mb = QMessageBox()
+                    mb.setText(self.tr(
+                        'Error writing Bitcoin configuration file.'
+                    ))
+                    mb.setInformativeText(str(e))
+                    mb.setIcon(QMessageBox.Critical)
+                    mb.exec_()
+                except:
+                    printException()
+        except EnvironmentError as e:
+            mb = QMessageBox()
+            mb.setText(self.tr('Error loading Bitcoin configuration file.'))
+            mb.setInformativeText(str(e))
+            mb.setIcon(QMessageBox.Critical)
+            mb.exec_()
+            return
+        except:
+            printException()
+
+        if TESTNET:
+            # Command line overrides config file
+            conf['testnet'] = '1'
+        if conf.get('testnet', '0') == '1':
+            self.setWindowTitle(self.origWindowTitle + ' [testnet]')
+        self.rpc = qbitcoinrpc.RPCManager(conf)
+        if not self.timer.isActive():
+            self.timer.start()
+            QtCore.QTimer.singleShot(0, self.update)
 
     def closeEvent(self, _):
         self.writeSettings()
@@ -580,37 +638,28 @@ class MainWindow(QtGui.QMainWindow):
 def load_config(argv):
 
     "Parse arguments, do global setup, and return a bitcoinconf."
+    # FIXME: Lies. Refactoring.
 
     # Parse arguments
-    datadir = None
-    conffile = 'bitcoin.conf'
-    testnet = False
+    global DEBUG, TESTNET, BITCOIN_DATA_DIR, BITCOIN_CONF
     for arg in argv[1:]:
         parts = arg.split('=', 1)
         if parts[0] == '-datadir':
             if len(parts) == 2:
-                datadir = parts[1]
+                BITCOIN_DATA_DIR = parts[1]
             else:
                 sys.stderr.write('Warning: empty -datadir, needs "="\n')
         elif parts[0] == '-conf':
             if len(parts) == 2:
-                conffile = parts[1]
+                BITCOIN_CONF = parts[1]
             else:
                 sys.stderr.write('Warning: empty -conf, needs "="\n')
         elif arg == '-testnet':
-            testnet = True
+            TESTNET = True
         elif arg == '-d' or arg == '-debug':
-            global DEBUG
             DEBUG = True
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
-
-    # Load Bitcoin configuration
-    conf = bitcoinconf.Conf()
-    conf.load(datadir, conffile)
-    if testnet:
-        # CLI overrides config file
-        conf['testnet'] = '1'
 
     # Get standard directories...
     dirs = appdirs.AppDirs('Bitnomon', 'Welsh Computing')
@@ -624,8 +673,6 @@ def load_config(argv):
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
-    return conf
-
 def main(argv=sys.argv[:]):
 
     "Main entry point of the program"
@@ -634,10 +681,10 @@ def main(argv=sys.argv[:]):
     qApp = QtGui.QApplication(argv)
     signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
 
-    conf = load_config(argv)
+    load_config(argv)
 
     try:
-        mainWin = MainWindow(conf)
+        mainWin = MainWindow()
         mainWin.show()
         return QtGui.qApp.exec_()
     except:

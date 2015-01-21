@@ -160,6 +160,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def _setupMenus(self):
         #pylint: disable=attribute-defined-outside-init
+        icon = QIcon(QIcon.fromTheme('view-refresh'))
+        self.ui.action_ReloadConf.setIcon(icon)
+        self.ui.action_ReloadConf.triggered.connect(self.loadBitcoinConf)
+
         self.ui.action_ClearTraffic.triggered.connect(self.clearTraffic)
 
         self.ui.action_ShutDownQuit.triggered.connect(self.shutdown)
@@ -376,6 +380,8 @@ recommended to set a wallet encryption passphrase and keep backups."""
             conf['testnet'] = '1'
         if conf.get('testnet', '0') == '1':
             self.setWindowTitle(self.origWindowTitle + ' [testnet]')
+        else:
+            self.setWindowTitle(self.origWindowTitle)
         self.rpc = qbitcoinrpc.RPCManager(conf)
         if not self.timer.isActive():
             self.timer.start()

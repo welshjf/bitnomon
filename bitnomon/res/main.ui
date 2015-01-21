@@ -368,6 +368,7 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="action_ReloadConf"/>
     <addaction name="action_ClearTraffic"/>
     <addaction name="action_ShutDownQuit"/>
     <addaction name="action_Quit"/>
@@ -490,6 +491,11 @@
    </property>
    <property name="toolTip">
     <string>Quit after telling the Bitcoin node to shut down</string>
+   </property>
+  </action>
+  <action name="action_ReloadConf">
+   <property name="text">
+    <string>&amp;Reload Bitcoin Configuration</string>
    </property>
   </action>
  </widget>

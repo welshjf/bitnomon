@@ -639,12 +639,17 @@ recommended to set a wallet encryption passphrase and keep backups."""
         self.statusRSS.setText('RSS: %s' %
             self.byteFormatter(self.perfProbe.rss))
 
-def load_config(argv):
+def main(argv=sys.argv[:]):
 
-    "Parse arguments, do global setup, and return a bitcoinconf."
-    # FIXME: Lies. Refactoring.
+    """Main entry point: parse arguments, do global setup, show the main
+    window, and start the Qt event loop."""
+
+    global qApp
+    qApp = QtGui.QApplication(argv)
+    signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
 
     # Parse arguments
+    # TODO: use a proper arg parser; provide help
     global DEBUG, TESTNET, BITCOIN_DATA_DIR, BITCOIN_CONF
     for arg in argv[1:]:
         parts = arg.split('=', 1)
@@ -665,7 +670,7 @@ def load_config(argv):
         else:
             sys.stderr.write('Warning: unknown argument ' + arg + '\n')
 
-    # Get standard directories...
+    # Set up standard directories...
     dirs = appdirs.AppDirs('Bitnomon', 'Welsh Computing')
     # for QSettings
     qApp.setApplicationName(dirs.appname)
@@ -676,16 +681,6 @@ def load_config(argv):
     DATA_DIR = dirs.user_data_dir
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-
-def main(argv=sys.argv[:]):
-
-    "Main entry point of the program"
-
-    global qApp
-    qApp = QtGui.QApplication(argv)
-    signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
-
-    load_config(argv)
 
     try:
         mainWin = MainWindow()

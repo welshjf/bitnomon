@@ -160,49 +160,51 @@ class MainWindow(QtGui.QMainWindow):
 
     def _setupMenus(self):
         #pylint: disable=attribute-defined-outside-init
+        ui = self.ui
+
         icon = QIcon(QIcon.fromTheme('view-refresh'))
-        self.ui.action_ReloadConf.setIcon(icon)
-        self.ui.action_ReloadConf.triggered.connect(self.loadBitcoinConf)
+        ui.action_ReloadConf.setIcon(icon)
+        ui.action_ReloadConf.triggered.connect(self.loadBitcoinConf)
 
-        self.ui.action_ClearTraffic.triggered.connect(self.clearTraffic)
+        ui.action_ClearTraffic.triggered.connect(self.clearTraffic)
 
-        self.ui.action_ShutDownQuit.triggered.connect(self.shutdown)
+        ui.action_ShutDownQuit.triggered.connect(self.shutdown)
 
         icon = QIcon(QIcon.fromTheme('application-exit'))
-        self.ui.action_Quit.setIcon(icon)
+        ui.action_Quit.setIcon(icon)
 
         icon = QIcon(QIcon.fromTheme('view-fullscreen'))
-        self.ui.action_FullScreen.setIcon(icon)
-        self.ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
+        ui.action_FullScreen.setIcon(icon)
+        ui.action_FullScreen.toggled.connect(self.toggleFullScreen)
 
         icon = QIcon(QIcon.fromTheme('zoom-original'))
-        self.ui.action_ResetZoom.setIcon(icon)
-        self.ui.action_ResetZoom.triggered.connect(self.resetZoom)
+        ui.action_ResetZoom.setIcon(icon)
+        ui.action_ResetZoom.triggered.connect(self.resetZoom)
 
         icon = QIcon(QIcon.fromTheme('help-about'))
-        self.ui.action_About.setIcon(icon)
-        self.ui.action_About.triggered.connect(self.about)
+        ui.action_About.setIcon(icon)
+        ui.action_About.triggered.connect(self.about)
 
         icon = QIcon(':/trolltech/qmessagebox/images/qtlogo-64.png')
-        self.ui.action_AboutQt.setIcon(icon)
-        self.ui.action_AboutQt.triggered.connect(QtGui.qApp.aboutQt)
+        ui.action_AboutQt.setIcon(icon)
+        ui.action_AboutQt.triggered.connect(QtGui.qApp.aboutQt)
 
-        self.ui.action_NetUnits.setSeparator(True)
-        self.ui.netUnitGroup = QtGui.QActionGroup(self)
-        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitBitSI)
-        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitByteSI)
-        self.ui.netUnitGroup.addAction(self.ui.action_NetUnitByteBinary)
-        self.ui.action_NetUnitByteSI.setChecked(True)
-        self.ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
-        self.ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
-        self.ui.action_NetUnitByteBinary.triggered.connect(
+        ui.action_NetUnits.setSeparator(True)
+        ui.netUnitGroup = QtGui.QActionGroup(self)
+        ui.netUnitGroup.addAction(ui.action_NetUnitBitSI)
+        ui.netUnitGroup.addAction(ui.action_NetUnitByteSI)
+        ui.netUnitGroup.addAction(ui.action_NetUnitByteBinary)
+        ui.action_NetUnitByteSI.setChecked(True)
+        ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
+        ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
+        ui.action_NetUnitByteBinary.triggered.connect(
                 self.netUnitByteBinary)
 
         # Any actions with keyboard shortcuts need to be added to the main
         # window to keep working when the menu bar is hidden :(
-        self.addAction(self.ui.action_Quit)
-        self.addAction(self.ui.action_FullScreen)
-        self.addAction(self.ui.action_ResetZoom)
+        self.addAction(ui.action_Quit)
+        self.addAction(ui.action_FullScreen)
+        self.addAction(ui.action_ResetZoom)
 
     def _setupStatusBar(self):
         #pylint: disable=attribute-defined-outside-init
@@ -271,20 +273,21 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
 
     def readSettings(self):
+        ui = self.ui
         with MainWindowSettings() as s:
             if s.size:
                 self.resize(s.size)
             if s.pos:
                 self.move(s.pos)
-            self.ui.action_FullScreen.setChecked(s.fullScreen)
-            self.ui.action_StatusBar.setChecked(s.statusBar)
+            ui.action_FullScreen.setChecked(s.fullScreen)
+            ui.action_StatusBar.setChecked(s.statusBar)
 
             if s.formatBits:
-                self.ui.action_NetUnitBitSI.trigger()
+                ui.action_NetUnitBitSI.trigger()
             elif s.formatSI:
-                self.ui.action_NetUnitByteSI.trigger()
+                ui.action_NetUnitByteSI.trigger()
             else:
-                self.ui.action_NetUnitByteBinary.trigger()
+                ui.action_NetUnitByteBinary.trigger()
 
             if s.netPlotXAuto:
                 self.networkPlot.enableAutoRange(x=True)
@@ -563,6 +566,8 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
     @chainRequest('getnettotals')
     def updateNetTotals(self, totals):
+        ui = self.ui
+
         def format_speed(byte_count, seconds):
             if byte_count is None:
                 return '-'
@@ -571,23 +576,23 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
         # Update in-memory RRAs for high-resolution traffic data and averages
         recv = totals['totalbytesrecv']
-        self.ui.lRecvTotal.setText(self.byteFormatter(recv))
+        ui.lRecvTotal.setText(self.byteFormatter(recv))
         self.trafRecv.update(recv)
-        self.ui.lRecv10s.setText(
+        ui.lRecv10s.setText(
                 format_speed(self.trafRecv.difference(-1, -6), 10))
-        self.ui.lRecv1m.setText(
+        ui.lRecv1m.setText(
                 format_speed(self.trafRecv.difference(-1, -31), 60))
-        self.ui.lRecv10m.setText(
+        ui.lRecv10m.setText(
                 format_speed(self.trafRecv.difference(-1, -300), 598))
 
         sent = totals['totalbytessent']
-        self.ui.lSentTotal.setText(self.byteFormatter(sent))
+        ui.lSentTotal.setText(self.byteFormatter(sent))
         self.trafSent.update(sent)
-        self.ui.lSent10s.setText(
+        ui.lSent10s.setText(
                 format_speed(self.trafSent.difference(-1, -6), 10))
-        self.ui.lSent1m.setText(
+        ui.lSent1m.setText(
                 format_speed(self.trafSent.difference(-1, -31), 60))
-        self.ui.lSent10m.setText(
+        ui.lSent10m.setText(
                 format_speed(self.trafSent.difference(-1, -300), 598))
 
         # Update RRDtool database for long-term traffic data

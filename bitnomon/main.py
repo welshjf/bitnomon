@@ -337,6 +337,7 @@ class MainWindow(QtGui.QMainWindow):
             conf.load(BITCOIN_DATA_DIR, BITCOIN_CONF)
         except bitcoinconf.FileNotFoundError:
             mb = QMessageBox()
+            mb.setWindowTitle(self.tr('Bitcoin Config Not Found'))
             mb.setText(self.tr(
                 'Bitcoin configuration file not found. Create one?'
             ))
@@ -357,6 +358,7 @@ recommended to set a wallet encryption passphrase and keep backups."""
                     conf.generate(BITCOIN_DATA_DIR, BITCOIN_CONF)
                 except EnvironmentError as e:
                     mb = QMessageBox()
+                    mb.setWindowTitle(self.tr('Error Writing Bitcoin Config'))
                     mb.setText(self.tr(
                         'Error writing Bitcoin configuration file.'
                     ))
@@ -367,6 +369,7 @@ recommended to set a wallet encryption passphrase and keep backups."""
                     printException()
         except EnvironmentError as e:
             mb = QMessageBox()
+            mb.setWindowTitle(self.tr('Error Loading Bitcoin Config'))
             mb.setText(self.tr('Error loading Bitcoin configuration file.'))
             mb.setInformativeText(str(e))
             mb.setIcon(QMessageBox.Critical)

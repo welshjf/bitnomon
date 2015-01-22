@@ -17,6 +17,9 @@
    <iconset resource="bitnomon.qrc">
     <normaloff>:/icons/bitnomon128.png</normaloff>:/icons/bitnomon128.png</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QGroupBox { border: 1px solid gray; }</string>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -134,9 +137,6 @@
       </item>
       <item>
        <widget class="QGroupBox" name="group_traffic">
-        <property name="title">
-         <string>Network Traffic</string>
-        </property>
         <layout class="QGridLayout" name="gridLayout" columnminimumwidth="0,80,100,100,100">
          <item row="2" column="1">
           <widget class="QLabel" name="label_3">
@@ -326,6 +326,16 @@
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="5">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Network Traffic</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>

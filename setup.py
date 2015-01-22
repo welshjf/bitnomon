@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright 2015 Jacob Welsh
 #
 # This file is part of Bitnomon; see the README for license information.
@@ -25,18 +27,15 @@ class sdist(_sdist):
             raise SystemExit(e)
         _sdist.run(self)
 
-with open('README.rst') as f:
-    readme_text = f.read()
-
 packages = ['bitnomon']
 package_dir = {}
-requires=[
-    'appdirs (>=1.3.0)',
+install_requires=[
+    'appdirs >=1.3.0',
     'numpy',
-    'PyQt4 (>=4.7.0)',
-    # The binding distributed with rrdtool itself is version 1.x. It works, but
-    # for Python 3 support we need the newer one from PyPI.
-    'rrdtool (>=0.1.0, <1.0.0)',
+    #'PyQt4 >=4.7.0', # Requires manual installation
+    'rrdtool', # Can be substituted with 'py-rrdtool'. That's an older binding,
+    # distributed with rrdtool itself, and thus more likely to be packaged in
+    # Linux distros already, but lacking Python 3 support.
 ]
 if BUNDLE:
     pg_pkgs = find_packages('deps/pyqtgraph', exclude=['examples*'])
@@ -45,13 +44,27 @@ if BUNDLE:
 else:
     # 0.9.8 is too old; 0.9.9/10 shipped with a drawing bug that affects us
     # (https://github.com/pyqtgraph/pyqtgraph/pull/136)
-    requires.append('pyqtgraph (>0.9.10)')
+    install_requires.append('pyqtgraph (>0.9.10)')
 
 setup(
     name='bitnomon',
     version=__version__,
     description='Monitoring/visualization GUI for a Bitcoin node',
-    long_description=readme_text,
+    long_description="""\
+Bitnomon aims to increase the interest and educational value in running a full
+validating node on the Bitcoin peer-to-peer network by presenting the details
+of its activities in a clear and user-friendly manner.
+
+Currently, besides displaying the basic information like network difficulty,
+block count, and peer count, it plots the transactions in the memory pool,
+block arrival times, and inbound/outbound network traffic. Traffic data is
+stored for up to a year, at decreasing resolutions, using a round-robin
+database in the standard RRDtool format.
+
+It supports Bitcoin Core, that is, the “Satoshi” clients bitcoind and
+bitcoin-qt, version 0.9+, or alternatives with a compatible JSON-RPC interface.
+It is a Qt application written in Python, and thus should support all the same
+platforms as Bitcoin Core itself.""",
     author='Jacob Welsh',
     author_email='jacob@welshcomputing.com',
     url='https://www.welshcomputing.com/code/bitnomon.html',
@@ -76,7 +89,7 @@ setup(
     ],
     packages=packages,
     package_dir=package_dir,
-    requires=requires,
+    install_requires=install_requires,
     package_data={
         'bitnomon': [],
     },

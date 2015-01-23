@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="icons">
-    <file>bitnomon64.png</file>
-    <file>bitnomon128.png</file>
+    <file>64x64/bitnomon.png</file>
+    <file>128x128/bitnomon.png</file>
   </qresource>
 </RCC>

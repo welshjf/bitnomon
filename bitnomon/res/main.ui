@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="bitnomon.qrc">
-    <normaloff>:/icons/bitnomon128.png</normaloff>:/icons/bitnomon128.png</iconset>
+    <normaloff>:/icons/128x128/bitnomon.png</normaloff>:/icons/128x128/bitnomon.png</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">QGroupBox { border: 1px solid gray; }</string>
@@ -27,7 +27,7 @@
       <item>
        <widget class="QLabel" name="label_logo">
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;br/&gt;&lt;img src=&quot;:/icons/bitnomon64.png&quot;/&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;by Jacob Welsh&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Bitnomon&lt;/span&gt;&lt;br/&gt;&lt;img src=&quot;:/icons/64x64/bitnomon.png&quot;/&gt;&lt;br/&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;by Jacob Welsh&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>

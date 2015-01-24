@@ -659,6 +659,7 @@ def main(argv=sys.argv[:]):
     window, and start the Qt event loop."""
 
     global qApp
+    argv[0] = 'bitnomon' # Set WM_CLASS on X11
     qApp = QtGui.QApplication(argv)
     signal.signal(signal.SIGINT, lambda *args: qApp.closeAllWindows())
 

@@ -31,3 +31,6 @@ cleaner: clean
 	find . -name '*.pyc' -exec rm -vf {} +
 	find . -type d -name __pycache__ -exec rmdir -v {} +
 	rm -rvf bitnomon.egg-info build
+
+bitnomon.icns:
+	png2icns bitnomon.icns bitnomon/res/{16x16,32x32,48x48,128x128,256x256}/bitnomon.png

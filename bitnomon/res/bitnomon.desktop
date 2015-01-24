@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Bitnomon
+Icon=bitnomon
+Exec=bitnomon
+Categories=System;Monitor;DataVisualization;
+StartupWMClass=bitnomon

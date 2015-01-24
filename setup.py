@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2015 Jacob Welsh
 #
 # This file is part of Bitnomon; see the README for license information.
@@ -8,6 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.sdist import sdist as _sdist
 from distutils import log
 import subprocess
+import platform
 from bitnomon import __version__, BUNDLE
 
 class sdist(_sdist):
@@ -27,44 +26,10 @@ class sdist(_sdist):
             raise SystemExit(e)
         _sdist.run(self)
 
-packages = ['bitnomon']
-package_dir = {}
-install_requires=[
-    'appdirs >=1.3.0',
-    'numpy',
-    #'PyQt4 >=4.7.0', # Requires manual installation
-    'rrdtool', # Can be substituted with 'py-rrdtool'. That's an older binding,
-    # distributed with rrdtool itself, and thus more likely to be packaged in
-    # Linux distros already, but lacking Python 3 support.
-]
-if BUNDLE:
-    pg_pkgs = find_packages('deps/pyqtgraph', exclude=['examples*'])
-    packages.extend('bitnomon.deps.' + pkg for pkg in pg_pkgs)
-    package_dir['bitnomon.deps.pyqtgraph'] = 'deps/pyqtgraph/pyqtgraph'
-else:
-    # 0.9.8 is too old; 0.9.9/10 shipped with a drawing bug that affects us
-    # (https://github.com/pyqtgraph/pyqtgraph/pull/136)
-    install_requires.append('pyqtgraph (>0.9.10)')
-
-setup(
+options = dict(
     name='bitnomon',
     version=__version__,
     description='Monitoring/visualization GUI for a Bitcoin node',
-    long_description="""\
-Bitnomon aims to increase the interest and educational value in running a full
-validating node on the Bitcoin peer-to-peer network by presenting the details
-of its activities in a clear and user-friendly manner.
-
-Currently, besides displaying the basic information like network difficulty,
-block count, and peer count, it plots the transactions in the memory pool,
-block arrival times, and inbound/outbound network traffic. Traffic data is
-stored for up to a year, at decreasing resolutions, using a round-robin
-database in the standard RRDtool format.
-
-It supports Bitcoin Core, that is, the “Satoshi” clients bitcoind and
-bitcoin-qt, version 0.9+, or alternatives with a compatible JSON-RPC interface.
-It is a Qt application written in Python, and thus should support all the same
-platforms as Bitcoin Core itself.""",
     author='Jacob Welsh',
     author_email='jacob@welshcomputing.com',
     url='https://www.welshcomputing.com/code/bitnomon.html',
@@ -87,12 +52,17 @@ platforms as Bitcoin Core itself.""",
         'Topic :: Scientific/Engineering :: Visualization',
         'Topic :: System :: Monitoring',
     ],
-    packages=packages,
-    package_dir=package_dir,
-    install_requires=install_requires,
-    package_data={
-        'bitnomon': [],
-    },
+    packages=['bitnomon'],
+    install_requires=[
+        'appdirs >=1.3.0',
+        'numpy',
+        #'PyQt4 >=4.7.0', # Requires manual installation
+        'py-rrdtool',
+        # This is an older binding distributed along with rrdtool. It lacks Python
+        # 3 support; 'rrdtool' from PyPI can be substituted where that is
+        # necessary. This is not the default because it isn't widely available in
+        # Linux distributions, complicating the common case.
+    ],
     entry_points={
         'gui_scripts': [
             'bitnomon=bitnomon.main:main',
@@ -102,3 +72,45 @@ platforms as Bitcoin Core itself.""",
     test_loader='run_unit_tests:Loader',
     cmdclass={'sdist': sdist},
 )
+
+with open('README.rst') as f:
+    options['long_description'] = f.read()
+
+# Bundle PyQtGraph if needed
+if BUNDLE:
+    pg_pkgs = find_packages('deps/pyqtgraph', exclude=['examples*'])
+    options['packages'].extend('bitnomon.deps.' + pkg for pkg in pg_pkgs)
+    options['package_dir'] = {
+        'bitnomon.deps.pyqtgraph': 'deps/pyqtgraph/pyqtgraph',
+    }
+else:
+    # 0.9.8 is too old; 0.9.9/10 shipped with a drawing bug that affects us
+    # (https://github.com/pyqtgraph/pyqtgraph/pull/136)
+    options['install_requires'].append('pyqtgraph >0.9.10')
+
+# Desktop integration
+system = platform.system()
+if system == 'Darwin':
+    options['setup_requires'] = ['py2app']
+    options['options'] = dict(py2app=dict(
+        iconfile='bitnomon.icns',
+        plist={
+            'CFBundleIdentifier': 'com.welshcomputing.bitnomon',
+        },
+    ))
+elif system == 'Windows':
+    pass
+else:
+    icondir = lambda size, icons: ('share/icons/hicolor/%s/apps' % size,
+            ['bitnomon/res/%s/%s' % (size, icon) for icon in icons])
+    options['data_files'] = [
+        ('share/applications', ['bitnomon/res/bitnomon.desktop']),
+        icondir('16x16', ['bitnomon.png']),
+        icondir('32x32', ['bitnomon.png']),
+        icondir('48x48', ['bitnomon.png']),
+        icondir('128x128', ['bitnomon.png']),
+        icondir('256x256', ['bitnomon.png']),
+        icondir('scalable', ['bitnomon.svg']),
+    ]
+
+setup(**options)

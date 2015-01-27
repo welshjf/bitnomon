@@ -17,9 +17,6 @@
    <iconset resource="bitnomon.qrc">
     <normaloff>:/icons/128x128/bitnomon.png</normaloff>:/icons/128x128/bitnomon.png</iconset>
   </property>
-  <property name="styleSheet">
-   <string notr="true">QGroupBox { border: 1px solid gray; }</string>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>

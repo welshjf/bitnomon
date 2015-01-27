@@ -7,6 +7,7 @@ from setuptools.command.sdist import sdist as _sdist
 from distutils import log
 import subprocess
 import platform
+import sys
 from bitnomon import __version__, BUNDLE
 
 class sdist(_sdist):
@@ -25,6 +26,13 @@ class sdist(_sdist):
         except subprocess.CalledProcessError as e:
             raise SystemExit(e)
         _sdist.run(self)
+
+if sys.version_info[0] < 3:
+    rrdtool = 'py-rrdtool'
+    # This is the older binding distributed with rrdtool itself; it lacks
+    # Python 3 support but is more widely available in Linux distributions.
+else:
+    rrdtool = 'rrdtool'
 
 options = dict(
     name='bitnomon',
@@ -57,11 +65,7 @@ options = dict(
         'appdirs >=1.3.0',
         'numpy',
         #'PyQt4 >=4.7.0', # Requires manual installation
-        'py-rrdtool',
-        # This is an older binding distributed along with rrdtool. It lacks Python
-        # 3 support; 'rrdtool' from PyPI can be substituted where that is
-        # necessary. This is not the default because it isn't widely available in
-        # Linux distributions, complicating the common case.
+        rrdtool,
     ],
     entry_points={
         'gui_scripts': [
@@ -92,19 +96,26 @@ else:
 system = platform.system()
 if system == 'Darwin':
     options['setup_requires'] = ['py2app']
-    options['options'] = dict(py2app=dict(
+    options['options'] = {'py2app': dict(
         iconfile='bitnomon.icns',
         plist={
             'CFBundleIdentifier': 'com.welshcomputing.bitnomon',
         },
-    ))
+    )}
 elif system == 'Windows':
     pass
 else:
+    options['setup_requires'] = ['install_freedesktop']
+    options['desktop_entries'] = {
+        'bitnomon': {
+            'Name': 'Bitnomon',
+            'GenericName': 'Bitcoin Node Monitor',
+            'Categories': 'System;Monitor;DataVisualization;',
+        },
+    }
     icondir = lambda size, icons: ('share/icons/hicolor/%s/apps' % size,
             ['bitnomon/res/%s/%s' % (size, icon) for icon in icons])
     options['data_files'] = [
-        ('share/applications', ['bitnomon/res/bitnomon.desktop']),
         icondir('16x16', ['bitnomon.png']),
         icondir('32x32', ['bitnomon.png']),
         icondir('48x48', ['bitnomon.png']),

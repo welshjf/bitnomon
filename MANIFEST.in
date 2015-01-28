@@ -4,6 +4,7 @@ include Makefile
 include pylintrc
 include run_unit_tests.py
 include testing.html
+include deps/install_freedesktop-*.tar.*
 recursive-include tests *.py
 recursive-include tools *.py
 recursive-include bitnomon/res *

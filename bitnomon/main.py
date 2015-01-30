@@ -238,7 +238,7 @@ class MainWindow(QtGui.QMainWindow):
         # Keep the last ~4 hours of block arrival times, as seen by Bitnomon,
         # since the bitcoin API doesn't provide this.
         self.lastBlockCount = None
-        self.blockRecvTimes = rrdmodel.RRA(24)
+        self.blockRecvTimes = rrdmodel.RRA(100)
 
         self.networkPlot = pyqtgraph.PlotItem(
                 name='traffic',

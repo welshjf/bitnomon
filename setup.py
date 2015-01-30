@@ -41,7 +41,7 @@ options = dict(
     author='Jacob Welsh',
     author_email='jacob@welshcomputing.com',
     url='https://www.welshcomputing.com/code/bitnomon.html',
-    license='MIT',
+    license='Apache License 2.0',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: MacOS X',
@@ -49,7 +49,7 @@ options = dict(
         'Environment :: X11 Applications :: Qt',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: POSIX',
         'Operating System :: MacOS :: MacOS X',
@@ -60,11 +60,12 @@ options = dict(
         'Topic :: Scientific/Engineering :: Visualization',
         'Topic :: System :: Monitoring',
     ],
+    keywords='bitcoin blockchain monitoring visualization pyqtgraph rrdtool',
     packages=['bitnomon'],
     install_requires=[
         'appdirs >=1.3.0',
         'numpy',
-        #'PyQt4 >=4.7.0', # Requires manual installation
+        #'PyQt4 >=4.7.0', # Installation doesn't provide metadata
         rrdtool,
     ],
     entry_points={

@@ -4,123 +4,136 @@ Bitnomon
 
 Monitoring/visualization GUI for a Bitcoin node
 
+.. image:: https://www.welshcomputing.com/code/img/bitnomon-icon.png
+   :alt: Icon
+
 Home page: https://www.welshcomputing.com/code/bitnomon.html
 
-Description
-===========
+About
+=====
 
 Bitnomon aims to increase the interest and educational value in running a full
-validating node on the Bitcoin peer-to-peer network by presenting the details
-of its activities in a clear and user-friendly manner.
+node on the Bitcoin peer-to-peer network by presenting a clear view of its
+activities.
 
-Currently, besides displaying the basic information like network difficulty,
-block count, and peer count, it plots the transactions in the memory pool,
-block arrival times, and inbound/outbound network traffic. Traffic data is
-stored for up to a year, at decreasing resolutions, using a round-robin
-database in the standard RRDtool format.
+It is a Python/Qt application and works with Bitcoin Core version 0.9+ (or
+alternatives with a compatible JSON-RPC interface). It must be run on the same
+system as the node, unless you are comfortable securing the API for remote
+access yourself.
 
-It supports Bitcoin Core, that is, the “Satoshi” clients bitcoind and
-bitcoin-qt, version 0.9+, or alternatives with a compatible JSON-RPC interface.
-It is a Qt application written in Python, and thus should support all the same
-platforms as Bitcoin Core itself.
+Features
+--------
 
-License
-=======
+* Basic information like difficulty, block and peer count
 
-Copyright (c) 2015 Jacob Welsh <jacob@welshcomputing.com>
+* Transactions in the memory pool, plotted by age versus fee, with “high
+  priority” transactions highlighted
 
-This program is free software under the MIT/X11 license; see the file LICENSE
-for details.
+* Block arrival times (as seen by Bitnomon, up to the last 24 blocks)
 
-The Bitnomon developers place no restrictions on its code beyond the above,
-however some parts may be considered derivatives of works under other free
-software licenses, as follows:
+* Inbound and outbound network traffic: total, recent averages, and plotted
+  over time; data is stored for up to a year, at decreasing resolutions, using
+  a round-robin database in the standard RRDtool format
 
-  * bitnomon/qbitcoinrpc.py: GNU Lesser General Public License, version 2.1 or
-    later; see the file and lgpl-2.1.txt for details
+* Interactive panning/zooming of plots
 
-  * The entire program when combined with PyQt: GNU General Public License
+* Full screen mode
 
 Supported Platforms
-===================
+-------------------
 
-The primary target platform is X11 on Linux. In principle, all the code is
-portable to Windows and Mac OS X, but installation may be more difficult there.
-Bundled releases including all dependencies may be available at some point.
-Other Unix-like systems should work too but are not tested.
+The primary target platform is X11 on Linux/UNIX. In principle, all the code is
+portable to Windows and Mac OS X, but these have not yet been a priority. Known
+working:
+
+* Fedora 20
+* CentOS 7
+* Debian 7 (Wheezy)
+* Ubuntu 12.04 LTS
 
 Installing
 ==========
 
-Non-Python dependencies: Qt 4, rrdtool
+First, install the dependencies that can't be installed from PyPI (or at least
+are easier with the system package manager).
 
-PyPI dependencies: PyQt4, numpy, rrdtool, appdirs
+Fedora/Red Hat::
 
-Fedora/Red Hat:
+    sudo yum install PyQt4 numpy rrdtool-python python-pip
 
-  * Base: `sudo yum install PyQt4 numpy rrdtool python-setuptools`
+Debian/Ubuntu::
 
-Ubuntu 14.04:
+    sudo apt-get install python-qt4 python-numpy python-rrdtool python-pip
 
-  * Base: `sudo apt-get install python-qt4 python-numpy rrdtool
-    python-setuptools`
+Then ``pip`` can download the rest (but see “More Secure Install,” below)::
 
-  * Full: `sudo apt-get install python-appdirs python-rrdtool`
+    pip install [--user] bitnomon
 
-This assumes you have downloaded a source release (not the Git repository).
+Or if you already have the source distribution::
 
-To install system-wide:
+    pip install [--user] bitnomon-<version>.tar.bz2
 
-    sudo python setup.py install
+The ``--user`` option causes Bitnomon to be installed in your home directory
+(under ~/.local). If you prefer a system-wide install, omit it and use
+``sudo``. Either way, uninstalling is simple::
 
-To install for the current user (requires $HOME/.local/bin in $PATH):
+    pip uninstall bitnomon
 
-    python setup.py install --user
+A launcher icon will be installed to the system menu, or you can run
+``bitnomon`` from the command line. For the latter to work with a user install,
+you may need to add ~/.local/bin to your PATH, for example by adding at the
+beginning of ~/.bashrc::
 
-Hacking
+    export PATH="$HOME/.local/bin:$PATH"
+
+More Secure Install
+-------------------
+
+The ``pip install`` command (as well as ``easy_install`` and ``setup.py
+install``) is subject to automatically downloading and executing code from PyPI
+(the Python Package Index). Newer versions of pip at least enforce HTTPS, but
+this still leaves openings for attack, such as the PyPI web infrastructure,
+third party uploaders, and certificate authorities.
+
+To mitigate this risk, I am providing a PGP-signed bundle of Bitnomon and its
+PyPI dependencies, available from the home page. Once you have downloaded and
+verified the signature, run::
+
+    tar xf bitnomon-<version>-bundle.tar
+    pip install [--user] --no-index -f bitnomon-<version>-bundle bitnomon
+
+(If your ``pip`` is too old to understand a local directory for -f, such as on
+Ubuntu 12.04, then you must explicitly specify the files to install.)
+
+License
 =======
 
-Update submodules and setup.py install the bundled pyqtgraph
+Copyright 2015 Jacob Welsh
 
-Fedora/Red Hat:
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this software except in compliance with the License.
+You may obtain a copy of the License at
 
-    sudo yum install PyQt4-devel [or pyside-tools] python-mock
+   http://www.apache.org/licenses/LICENSE-2.0
 
-Ubuntu 14.04:
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
-    sudo apt-get install pyqt4-dev-tools [or pyside-tools] python-mock
+Parts of Bitnomon may be considered derivatives of works under other free
+software licenses, specifically:
 
-`make`, then run using one of:
-
-`python setup.py develop --user`, put ~/.local/bin in `$PATH`, and run `bitnomon`
-
-`python -m bitnomon`
-
-Not `python bitnomon` -- that doesn't add project dir to sys.path
-
-Testing
--------
-
-`python setup.py test` or just `python run_unit_tests.py`
-
-`pylint bitnomon`
-
-Style
------
-
-Release Process
----------------
-
-Bundling Note
--------------
+* bitnomon/qbitcoinrpc.py: GNU Lesser General Public License, version 2.1 or
+  later; see the file itself and lgpl-2.1.txt for details
 
 PyQt Note
 ---------
 
-Bitnomon can use either PySide or PyQt as its Qt binding. PyQt is recommended,
-because there is a memory leak at least as of PySide 1.2.1.
-
-PySide, like Qt itself, is available under the LGPL. PyQt is only available
-under the GPL or a commercial license from Riverbank Computing Limited. If you
-use or distribute Bitnomon with PyQt, you may be subject to the additional
-restrictions of the GPL.
+Bitnomon can use either PySide or PyQt. PyQt is the default and recommended
+binding (in part because there is a slow but steady memory leak at least as of
+PySide 1.2.1). However, it is only available under the GPL or a commercial
+license from Riverbank Computing Limited. If you use or redistribute Bitnomon
+with PyQt, you may be subject to the additional restrictions of the GPL. PySide
+is available under the LGPL, like Qt itself.

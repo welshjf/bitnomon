@@ -8,6 +8,7 @@ from distutils import log
 import subprocess
 import platform
 import sys
+import codecs
 from bitnomon import __version__, BUNDLE
 
 class sdist(_sdist):
@@ -28,16 +29,22 @@ class sdist(_sdist):
         _sdist.run(self)
 
 if sys.version_info[0] < 3:
-    rrdtool = 'py-rrdtool'
+    RRDTOOL = 'py-rrdtool'
     # This is the older binding distributed with rrdtool itself; it lacks
     # Python 3 support but is more widely available in Linux distributions.
 else:
-    rrdtool = 'rrdtool'
+    RRDTOOL = 'rrdtool'
+
+with codecs.open('README.rst', encoding='utf-8') as f:
+    README = f.read()
+with codecs.open('CHANGES.rst', encoding='utf-8') as f:
+    CHANGES = f.read()
 
 options = dict(
     name='bitnomon',
     version=__version__,
     description='Monitoring/visualization GUI for a Bitcoin node',
+    long_description=README + '\n\n' + CHANGES,
     author='Jacob Welsh',
     author_email='jacob@welshcomputing.com',
     url='https://www.welshcomputing.com/code/bitnomon.html',
@@ -66,7 +73,7 @@ options = dict(
         'appdirs >=1.3.0',
         'numpy',
         #'PyQt4 >=4.7.0', # Installation doesn't provide metadata
-        rrdtool,
+        RRDTOOL,
     ],
     entry_points={
         'gui_scripts': [
@@ -77,9 +84,6 @@ options = dict(
     test_loader='run_unit_tests:Loader',
     cmdclass={'sdist': sdist},
 )
-
-with open('README.rst') as f:
-    options['long_description'] = f.read()
 
 # Bundle PyQtGraph if needed
 if BUNDLE:

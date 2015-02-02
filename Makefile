@@ -24,6 +24,9 @@ bitnomon/%_rc.py: bitnomon/res/%.qrc
 bitnomon/qtwrapper.py: bitnomon/$(QTWRAPPER_SRC)
 	cp $< $@
 
+%.html: %.rst
+	rst2html $< $@
+
 clean:
 	rm -vf $(generated)
 

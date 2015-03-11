@@ -545,9 +545,12 @@ recommended to set a wallet encryption passphrase and keep backups."""
             self.replies.append(reply)
             self.chainIndex += 1
 
-    @chainRequest('getinfo')
+    @chainRequest('getnetworkinfo')
     def updateInfo(self, info):
         self.ui.lConns.setText(str(info['connections']))
+
+    @chainRequest('getmininginfo')
+    def updateMiningInfo(self, info):
         blocks = info['blocks']
         self.ui.lBlocks.setText(str(blocks))
         if self.lastBlockCount is None:
@@ -555,12 +558,8 @@ recommended to set a wallet encryption passphrase and keep backups."""
         else:
             if blocks > self.lastBlockCount:
                 #pylint: disable=attribute-defined-outside-init
-                # ^ false positive?
                 self.lastBlockCount = blocks
                 self.blockRecvTimes.update(time.time())
-
-    @chainRequest('getmininginfo')
-    def updateMiningInfo(self, info):
         self.ui.lDifficulty.setText(u'%.3g' % info['difficulty'])
         self.ui.lPooledTx.setText(str(info['pooledtx']))
 

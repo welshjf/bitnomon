@@ -3,10 +3,15 @@
 # This file is part of Bitnomon; see the README for license information.
 
 import os
+import sys
 import time
 import decimal
 
 import rrdtool
+
+if sys.version_info[0] > 2:
+    #pylint: disable=redefined-builtin,invalid-name
+    xrange = range
 
 class RRDModel(object):
 

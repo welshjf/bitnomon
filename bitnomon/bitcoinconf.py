@@ -77,5 +77,5 @@ server=1
 rpcuser=local
 rpcpassword=%s
 """
-            ) % password)
+                    ) % password)
         self.load(datadir, filename)

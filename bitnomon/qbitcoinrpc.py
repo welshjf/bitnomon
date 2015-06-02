@@ -127,7 +127,7 @@ class RPCManager(QtCore.QObject):
         request.setRawHeader('Authorization', self.auth)
         request.setRawHeader('Content-Type', 'application/json')
         request.setAttribute(
-                QtNetwork.QNetworkRequest.HttpPipeliningAllowedAttribute, True)
+            QtNetwork.QNetworkRequest.HttpPipeliningAllowedAttribute, True)
         data = json.dumps({
             'version': '1.1',
             'method': method,

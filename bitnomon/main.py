@@ -197,8 +197,7 @@ class MainWindow(QtGui.QMainWindow):
         ui.action_NetUnitByteSI.setChecked(True)
         ui.action_NetUnitBitSI.triggered.connect(self.netUnitBitSI)
         ui.action_NetUnitByteSI.triggered.connect(self.netUnitByteSI)
-        ui.action_NetUnitByteBinary.triggered.connect(
-                self.netUnitByteBinary)
+        ui.action_NetUnitByteBinary.triggered.connect(self.netUnitByteBinary)
 
         # Any actions with keyboard shortcuts need to be added to the main
         # window to keep working when the menu bar is hidden :(
@@ -241,33 +240,35 @@ class MainWindow(QtGui.QMainWindow):
         self.blockRecvTimes = rrdmodel.RRA(24)
 
         self.networkPlot = pyqtgraph.PlotItem(
-                name='traffic',
-                left=(self.tr('Traffic'), 'B/s')
-                )
+            name='traffic',
+            left=(self.tr('Traffic'), 'B/s')
+        )
         self.networkPlot.showGrid(y=True)
         self.networkPlot.hideAxis('bottom')
-        self.trafSentPlot = pyqtgraph.PlotDataItem(numpy.zeros(traf_intervals),
-                pen=(255, 0, 0), fillLevel=0, brush=(255, 0, 0, 100))
-        self.trafRecvPlot = pyqtgraph.PlotDataItem(numpy.zeros(traf_intervals),
-                pen=(0, 255, 0), fillLevel=0, brush=(0, 255, 0, 100))
+        self.trafSentPlot = pyqtgraph.PlotDataItem(
+            numpy.zeros(traf_intervals),
+            pen=(255, 0, 0), fillLevel=0, brush=(255, 0, 0, 100))
+        self.trafRecvPlot = pyqtgraph.PlotDataItem(
+            numpy.zeros(traf_intervals),
+            pen=(0, 255, 0), fillLevel=0, brush=(0, 255, 0, 100))
         self.networkPlot.addItem(self.trafSentPlot)
         self.networkPlot.addItem(self.trafRecvPlot)
         self.networkPlot.invertX()
         self.ui.networkPlotView.setCentralWidget(self.networkPlot)
 
         self.memPoolPlot = pyqtgraph.PlotItem(
-                name='mempool',
-                left=(self.tr('Fee'), 'BTC/kB'),
-                bottom=(self.tr('Age'), self.tr('d:h:m')),
-                axisItems={'bottom': AgeAxisItem('bottom')},
-                )
+            name='mempool',
+            left=(self.tr('Fee'), 'BTC/kB'),
+            bottom=(self.tr('Age'), self.tr('d:h:m')),
+            axisItems={'bottom': AgeAxisItem('bottom')},
+        )
         self.memPoolPlot.setXLink('traffic')
         self.memPoolPlot.showGrid(x=True, y=True)
         self.memPoolPlot.invertX()
         # Use the scatter plot API directly, because going through PlotDataItem
         # has strange complications.
-        self.memPoolScatterPlot = pyqtgraph.ScatterPlotItem([],
-            symbol='t', size=10, brush=(255, 255, 255, 50),
+        self.memPoolScatterPlot = pyqtgraph.ScatterPlotItem(
+            [], symbol='t', size=10, brush=(255, 255, 255, 50),
             pen=None, pxMode=True)
         self.memPoolPlot.addItem(self.memPoolScatterPlot)
         self.ui.memPoolPlotView.setCentralWidget(self.memPoolPlot)
@@ -297,23 +298,23 @@ class MainWindow(QtGui.QMainWindow):
                 self.memPoolPlot.enableAutoRange(x=True)
             elif None not in (s.netPlotXMin, s.netPlotXMax):
                 self.networkPlot.setXRange(
-                        s.netPlotXMin,
-                        s.netPlotXMax,
-                        padding=0)
+                    s.netPlotXMin,
+                    s.netPlotXMax,
+                    padding=0)
 
             if (not s.netPlotYAuto) and (
                     None not in (s.netPlotYMin, s.netPlotYMax)):
                 self.networkPlot.setYRange(
-                        s.netPlotYMin,
-                        s.netPlotYMax,
-                        padding=0)
+                    s.netPlotYMin,
+                    s.netPlotYMax,
+                    padding=0)
 
             if (not s.memPlotYAuto) and (
                     None not in (s.memPlotYMin, s.memPlotYMax)):
                 self.memPoolPlot.setYRange(
-                        s.memPlotYMin,
-                        s.memPlotYMax,
-                        padding=0)
+                    s.memPlotYMin,
+                    s.memPlotYMax,
+                    padding=0)
 
     def writeSettings(self):
         with MainWindowSettings() as s:
@@ -350,8 +351,7 @@ default; a configuration file is required to allow this. Bitnomon can create \
 one to allow connections from the local system, restricted to your user \
 account by a stored random password. You will need to restart your node for \
 this to take effect. As always, if you store funds on this system, it is \
-recommended to set a wallet encryption passphrase and keep backups."""
-            ))
+recommended to set a wallet encryption passphrase and keep backups."""))
             mb.setIcon(QMessageBox.Question)
             mb.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             mb.setDefaultButton(QMessageBox.Yes)
@@ -494,9 +494,10 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
     @QtCore.Slot()
     def clearTraffic(self):
-        ret = QMessageBox.question(self, self.tr('Clear Traffic Data'),
-                self.tr('Clear the long-term network traffic history?'),
-                buttons=(QMessageBox.Yes | QMessageBox.No))
+        ret = QMessageBox.question(
+            self, self.tr('Clear Traffic Data'),
+            self.tr('Clear the long-term network traffic history?'),
+            buttons=(QMessageBox.Yes | QMessageBox.No))
         if ret == QMessageBox.Yes:
             self.trafRRD.create()
             self.trafRecv.clear()
@@ -505,10 +506,10 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
     @QtCore.Slot()
     def shutdown(self):
-        ret = QMessageBox.question(self,
-                self.tr('Shut Down Node and Quit'),
-                self.tr('Stop the monitored Bitcoin node as well as Bitnomon?'),
-                buttons=(QMessageBox.Yes | QMessageBox.No))
+        ret = QMessageBox.question(
+            self, self.tr('Shut Down Node and Quit'),
+            self.tr('Stop the monitored Bitcoin node as well as Bitnomon?'),
+            buttons=(QMessageBox.Yes | QMessageBox.No))
         if ret == QMessageBox.Yes:
             self.tempReply = self.rpc.request('stop')
             self.tempReply.finished.connect(self.close)
@@ -578,21 +579,21 @@ recommended to set a wallet encryption passphrase and keep backups."""
         ui.lRecvTotal.setText(self.byteFormatter(recv))
         self.trafRecv.update(recv)
         ui.lRecv10s.setText(
-                format_speed(self.trafRecv.difference(-1, -6), 10))
+            format_speed(self.trafRecv.difference(-1, -6), 10))
         ui.lRecv1m.setText(
-                format_speed(self.trafRecv.difference(-1, -31), 60))
+            format_speed(self.trafRecv.difference(-1, -31), 60))
         ui.lRecv10m.setText(
-                format_speed(self.trafRecv.difference(-1, -300), 598))
+            format_speed(self.trafRecv.difference(-1, -300), 598))
 
         sent = totals['totalbytessent']
         ui.lSentTotal.setText(self.byteFormatter(sent))
         self.trafSent.update(sent)
         ui.lSent10s.setText(
-                format_speed(self.trafSent.difference(-1, -6), 10))
+            format_speed(self.trafSent.difference(-1, -6), 10))
         ui.lSent1m.setText(
-                format_speed(self.trafSent.difference(-1, -31), 60))
+            format_speed(self.trafSent.difference(-1, -31), 60))
         ui.lSent10m.setText(
-                format_speed(self.trafSent.difference(-1, -300), 598))
+            format_speed(self.trafSent.difference(-1, -300), 598))
 
         # Update RRDtool database for long-term traffic data
         sampleTime = totals['timemillis']
@@ -644,13 +645,13 @@ recommended to set a wallet encryption passphrase and keep backups."""
 
     @QtCore.Slot()
     def updateStatusMissedSamples(self):
-        self.statusMissedSamples.setText('Missed samples: %d' %
-            self.missedSamples)
+        self.statusMissedSamples.setText(
+            'Missed samples: %d' % self.missedSamples)
 
     @QtCore.Slot()
     def updateStatusRSS(self):
-        self.statusRSS.setText('RSS: %s' %
-            self.byteFormatter(self.perfProbe.rss))
+        self.statusRSS.setText(
+            'RSS: %s' % self.byteFormatter(self.perfProbe.rss))
 
 def main(argv=sys.argv[:]):
 

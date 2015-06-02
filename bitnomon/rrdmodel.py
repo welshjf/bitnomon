@@ -44,13 +44,13 @@ class RRDModel(object):
         min_val = '0'
         max_val = 'U'
         consolidation = ['RRA:AVERAGE:0.5:%d:%d' % (res, count)
-            for (res, count) in self.consolidation]
+                         for (res, count) in self.consolidation]
         args = [self.rrd_file, '--start', start, '--step', step]
         args.append(':'.join(('DS', 'inbound', data_source_type, heartbeat,
-                min_val, max_val)))
+                              min_val, max_val)))
         args.extend(consolidation)
         args.append(':'.join(('DS', 'outbound', data_source_type, heartbeat,
-                min_val, max_val)))
+                              min_val, max_val)))
         args.extend(consolidation)
         rrdtool.create(*args)
 
@@ -64,7 +64,7 @@ class RRDModel(object):
         else:
             time_str = str(decimal.Decimal(t) / 1000)
         rrdtool.update(self.rrd_file,
-                ':'.join([time_str] + [str(v) for v in vals]))
+                       ':'.join([time_str] + [str(v) for v in vals]))
 
     def fetch(self, start, end=None, resolution=1):
         """Fetch data from the RRD.
@@ -80,10 +80,11 @@ class RRDModel(object):
             start += end
         end -= end % resolution
         start -= start % resolution
-        time_span, _, values = rrdtool.fetch(self.rrd_file, 'AVERAGE',
-                '-s', str(int(start)),
-                '-e', str(int(end)),
-                '-r', str(resolution))
+        time_span, _, values = rrdtool.fetch(
+            self.rrd_file, 'AVERAGE',
+            '-s', str(int(start)),
+            '-e', str(int(end)),
+            '-r', str(resolution))
         ts_start, ts_end, ts_res = time_span
         times = range(ts_start, ts_end, ts_res)
         return zip(times, values)

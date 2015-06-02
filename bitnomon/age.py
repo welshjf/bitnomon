@@ -72,5 +72,5 @@ class AgeAxisItem(pyqtgraph.AxisItem):
                     return '%d:%02.*f' % (hours, minutePrecision, minutes)
             else:
                 return '%d:%02d:%02.*f' % (days, hours,
-                        minutePrecision, minutes)
+                                           minutePrecision, minutes)
         return [formatValue(v) for v in values]

@@ -12,6 +12,7 @@ import time
 import math
 import traceback
 import signal
+from itertools import islice
 
 # This must come before pyqtgraph so it doesn't try to guess the binding
 from .qtwrapper import (
@@ -51,6 +52,7 @@ TESTNET = False
 DATA_DIR = ''
 BITCOIN_DATA_DIR = None
 BITCOIN_CONF = 'bitcoin.conf'
+MEMPOOL_LIMIT = 5000
 
 def printException():
     "Print a stack trace, or just the exception, depending on debug setting"
@@ -608,15 +610,15 @@ recommended to set a wallet encryption passphrase and keep backups."""))
         except:
             printException()
         now = time.time()
-        transactions = pool.values()
+        # Limit the number of plot points for performance
+        transactions = islice(pool.values(), MEMPOOL_LIMIT)
+        num_tx = min(len(pool), MEMPOOL_LIMIT)
         minFreePriority = bitcoinconf.COIN * 144 // 250
         redPen = pyqtgraph.mkPen((255, 0, 0, 100))
-        pens = [None]*len(transactions)
-        positions = numpy.empty((len(transactions), 2))
-        idx_iter = iter(xrange(len(transactions)))
-        for tx in transactions:
+        pens = [None]*num_tx
+        positions = numpy.empty((num_tx, 2))
+        for i, tx in enumerate(transactions):
             fee = float(tx['fee']) / math.ceil(float(tx['size'])/1000.)
-            i = next(idx_iter)
             positions[i] = (ageOfTime(now, float(tx['time'])), fee)
             if int(tx['currentpriority']) >= minFreePriority:
                 pens[i] = redPen

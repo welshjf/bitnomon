@@ -4,7 +4,6 @@ Planned for 1.0
 * Finish TODOs, pylint
 * Show license in about dialog
 * Windows/Mac testing and packaging
-* Mempool size limiting
 * Full screen exit widget for Ubuntu Unity (maybe others) where menu bar is
   broken
 

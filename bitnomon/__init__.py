@@ -4,7 +4,7 @@
 
 """Monitoring GUI for a Bitcoin Core node"""
 
-__version__ = '0.1.1'
+__version__ = '0.1.2.dev0'
 
 # Whether to bundle dependencies (pyqtgraph) inside the package
 BUNDLE = True
